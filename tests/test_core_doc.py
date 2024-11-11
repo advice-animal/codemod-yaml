@@ -15,6 +15,15 @@ foo:
  - 0x04
 """
 
+DEMO_STRINGS = """\
+- a
+- "b"
+- 'c'
+- |
+  d
+"""
+
+
 def test_parse_simple():
     doc = YamlStream.from_string(SIMPLE_YAML)
     first = doc["foo"]
@@ -44,6 +53,13 @@ def test_parse_demo():
         first[99]
     new_text = doc.text
     assert new_text == DEMO_YAML.encode("utf-8")
+
+def test_parse_strings():
+    doc = YamlStream.from_string(DEMO_STRINGS)
+    assert doc[0] == "a"
+    assert doc[1] == "b"
+    assert doc[2] == "c"
+    #assert doc[3] == "d"
 
 def test_edit_int():
     doc = YamlStream.from_string(SIMPLE_YAML)

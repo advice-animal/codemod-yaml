@@ -51,6 +51,7 @@ class YamlStringScalar(BaseYaml):
         self.value = self.node.text.decode("utf-8")
 
     def __eq__(self, other: str) -> bool:
+        print(f"cmp {self.value!r}, {other!r}")
         return self.value == other
 
     def __hash__(self) -> int:
@@ -64,6 +65,24 @@ class YamlStringScalar(BaseYaml):
             self.stream.record_edit(self.node.parent, new_bytes)
         else:
             self.stream.record_edit(self.node, new_bytes)
+
+
+@dataclass
+class YamlStringDoubleQuoteScalar(YamlStringScalar):
+    def __post_init__(self):
+        self.value = ast.literal_eval(self.node.text.decode("utf-8"))
+
+    # TODO why do I have to redefine this?
+    def __eq__(self, other: str) -> bool:
+        print(f"cmp {self.value!r}, {other!r}")
+        return self.value == other
+
+
+@dataclass
+class YamlStringSingleQuoteScalar(YamlStringDoubleQuoteScalar):
+    def __eq__(self, other: str) -> bool:
+        print(f"cmp {self.value!r}, {other!r}")
+        return self.value == other
 
 
 @dataclass

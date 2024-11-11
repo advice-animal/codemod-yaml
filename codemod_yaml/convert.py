@@ -41,7 +41,9 @@ from .scalars import (  # noqa: E402
     SurrogateIntegerScalar,
     SurrogateStringScalar,
     YamlIntegerScalar,
+    YamlStringDoubleQuoteScalar,
     YamlStringScalar,
+    YamlStringSingleQuoteScalar,
 )
 from .sequences import YamlBlockSequence  # noqa: E402
 
@@ -52,7 +54,7 @@ _dispatch = {
     # "flow_node.flow_mapping": YamlFlowMapping,
     "flow_node.plain_scalar.string_scalar": YamlStringScalar,
     "flow_node.plain_scalar.integer_scalar": YamlIntegerScalar,
-    # "flow_node.single_quote_scalar": YamlSingleQuoteScalar,
-    # "flow_node.double_quote_scalar": YamlDoubleQuoteScalar,
+    "flow_node.single_quote_scalar": YamlStringSingleQuoteScalar,
+    "flow_node.double_quote_scalar": YamlStringDoubleQuoteScalar,
     # "block_node.block_scalar": YamlBlockScalar
 }
