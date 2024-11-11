@@ -56,9 +56,14 @@ class YamlStringScalar(BaseYaml):
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def record_change(self, new_bytes: bytes) -> None:
+    def record_change(self, new_bytes: bytes, deletion: bool = False) -> None:
         # cookie = ...
-        self.stream.record_edit(self.node, new_bytes)
+        if deletion:
+            # TODO include newline too; this is really only if the parent was
+            # block, we need to find a potential comma otherwise
+            self.stream.record_edit(self.node.parent, new_bytes)
+        else:
+            self.stream.record_edit(self.node, new_bytes)
 
 
 @dataclass

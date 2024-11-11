@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import count
 from logging import getLogger, WARNING
 from typing import Any, Dict, Optional, Union
 
@@ -13,6 +14,8 @@ from .convert import wrap
 
 logger = getLogger(__name__)
 parser = Parser(Language(yaml_language()))
+
+COOKIE_GENERATOR = count()
 
 
 @dataclass
@@ -40,7 +43,7 @@ class YamlStream:
     def __delitem__(self, key: Union[int, str]) -> None:
         del self.root[key]
 
-    def record_edit(self, in_place_of: BaseYaml, new_bytes: bytes):
+    def record_edit(self, in_place_of: BaseYaml, new_bytes: bytes) -> int:
         assert b"\n" not in new_bytes  # have to deal with line numbers for end_point
         new_end_point = (
             in_place_of.start_point[0],
@@ -48,33 +51,44 @@ class YamlStream:
             + len(new_bytes)
             - (in_place_of.end_byte - in_place_of.start_byte),
         )
-        self._edits[in_place_of.start_byte] = (
-            (
+        cookie = next(COOKIE_GENERATOR)
+        # TODO if this is broader than an edit we currently have, remove the
+        # narrower ones and invalidate their objects. I guess we have to keep
+        # their objects around too, this is almost ready for a dataclass.
+        self._edits[cookie] = (
+            (  # sort key
+                in_place_of.start_byte,
+                cookie,
+            ),
+            (  # args
                 in_place_of.start_byte,
                 in_place_of.end_byte,
                 in_place_of.start_byte + len(new_bytes),
                 in_place_of.start_point,
                 in_place_of.end_point,
                 new_end_point,
-            ),
+            ),  # new bytes, for our own edit
             new_bytes,
         )
+        return cookie
 
     @property
     def text(self) -> bytes:
         tmp = self.original_bytes
 
-        for _, edit in sorted(self._edits.items(), reverse=True):
+        # TODO verify edits are non-overlapping
+        for edit in sorted(self._edits.values(), reverse=True):
             logger.log(
                 WARNING,
                 "Apply edit: %r->%r @ %r",
-                tmp[edit[0][0] : edit[0][1]],
+                tmp[edit[1][0] : edit[1][1]],
+                edit[2],
                 edit[1],
-                edit[0],
             )
-            tmp = tmp[: edit[0][0]] + edit[1] + tmp[edit[0][1] :]
-            self._tree.edit(*edit[0])
-
+            tmp = tmp[: edit[1][0]] + edit[2] + tmp[edit[1][1] :]
+            self._tree.edit(*edit[1])
+        logger.warning("New text: %r", tmp)
+        tmp = tmp.lstrip(b"\n")
         assert parser.parse(tmp, old_tree=self._tree).root_node.text == tmp
         return tmp
 

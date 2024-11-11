@@ -30,14 +30,18 @@ class YamlBlockMapping(BaseYaml):
     def __setitem__(self, key: str, value: Any) -> None:
         yaml_value = wrap_native(value, self.stream)
         try:
+            # TODO if self.key[cookie], record_change(..., cookie=cookie)
             self[key].record_change(yaml_value.to_bytes())
             self._cache[key] = yaml_value
         except KeyError:
             pass
 
     def __delitem__(self, key: str) -> None:
+        # TODO if self.key[cookie], self.stream.record_delete(cookie)
         self[key]
-        self[key].record_change(b"")
+        # TODO this is the wrong item, we need its grandparent to get the
+        # block_node, but that one isn't currently wrapped.  See hack in scalar.
+        self[key].record_change(b"", deletion=True)
         self._cache[key] = ERASURE
 
 
