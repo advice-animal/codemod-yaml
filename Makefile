@@ -16,8 +16,7 @@ setup:
 
 .PHONY: test
 test:
-	python -m coverage run -m codemod_yaml.tests $(TESTOPTS)
-	python -m coverage report
+	pytest --cov=codemod_yaml
 
 .PHONY: format
 format:
