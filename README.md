@@ -1,5 +1,11 @@
 # codemod-yaml
 
+This library is for making targeted edits to YAML documents, with the aim of
+keeping all non-edited lines verbatim.
+
+It does not support *editing* all YAML constructs, but should support
+*round-tripping* them by virtue of using tree-sitter-yaml for the actual
+parsing.
 
 # Version Compat
 
