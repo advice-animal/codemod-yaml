@@ -30,7 +30,7 @@ class YamlBlockSequence(BoxedYaml):
 
         seq_item = PyBlockSequenceItem(other, yaml_style=self._yaml_style)
 
-        self.stream.edit(self, seq_item, append=True)
+        other.cookie = self.stream.edit(self, seq_item, append=True)
         self._items[self._count] = other
         self._count += 1
 
@@ -46,13 +46,15 @@ class YamlBlockSequence(BoxedYaml):
 
         t = self[index]
         if isinstance(t, BoxedYaml):
-            self.stream.edit(t, other)
+            other.cookie = self.stream.edit(t, other)
         self._items[index].value = other
 
     def __delitem__(self, index: int) -> None:
         self._ensure(index)
         if isinstance(self._items[index], BoxedYaml):
             self.stream.edit(self._items[index], None)
+        elif isinstance(self._items[index], BoxedPy):
+            self.stream.cancel_cookie(self._items[index].cookie)  # type: ignore[attr-defined]
         # TODO fix count, etc
 
     def _ensure(self, index: int) -> None:

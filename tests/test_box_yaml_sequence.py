@@ -73,3 +73,11 @@ def test_nested_sequence():
     assert stream.text == b"-\n  -  a\n  -  c\n"
     stream[0].append(PyScalarString("d", QuoteStyle.BARE))
     assert stream.text == b"-\n  -  a\n  -  c\n  -  d\n"
+
+def test_cookie_sequence():
+    stream = parse_str("""\
+- a
+""")
+    stream.append("b")
+    del stream[1]
+    assert stream.text == b"- a\n"
