@@ -36,3 +36,16 @@ key2:
  - "new item"
 blah: [ 4, 5   , 6]
 """
+
+def test_delete_nested_mapping():
+    stream = parse_str("""\
+key:
+    a: b
+    nested: value
+    c: d
+""")
+    del stream["key"]["nested"]
+    assert stream.text == b"""key:
+    a: b
+    c: d
+"""

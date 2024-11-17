@@ -49,3 +49,25 @@ def test_string_sequence():
     assert stream[3] == "d"
     # didn't make any edits, this should be fine
     assert stream.text == b"- a\n- \"b\"\n- 'c'\n- |\n  d\n"
+
+def test_nested_sequence():
+    stream = parse_str("""\
+-
+  - a
+  - b
+  - c
+""")
+    assert stream[0][0] == "a"
+    assert stream[0][1] == "b"
+    assert stream[0][2] == "c"
+    # didn't make any edits, this should be fine
+    assert stream.text == b"-\n  - a\n  - b\n  - c\n"
+    stream[0][1] = PyScalarString("new", QuoteStyle.BARE)
+    assert stream.text == b"""\
+-
+  - a
+  - new
+  - c
+"""
+    del stream[0][1]
+    assert stream.text == b"-\n  - a\n  - c\n"

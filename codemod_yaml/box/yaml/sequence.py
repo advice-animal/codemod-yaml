@@ -79,6 +79,17 @@ class YamlBlockSequenceItem(BoxedYaml):
     value = property(get_value, set_value)
 
     @property
+    def start_byte(self) -> int:
+        expected_indent = self.node.start_point.column
+        leading_whitespace = self.stream._original_bytes[
+            self.node.start_byte - expected_indent : self.node.start_byte
+        ]
+        assert (
+            leading_whitespace == b" " * expected_indent
+        )  # can't handle same-line block like "- - a" yet
+        return self.node.start_byte - expected_indent
+
+    @property
     def end_byte(self) -> int:
         # TODO conditional
         return self.node.end_byte + 1
