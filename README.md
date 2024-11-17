@@ -1,5 +1,14 @@
 # codemod-yaml
 
+This library is for making targeted edits to YAML documents.  The core design goal is:
+
+1. Only change lines with *data* changes.
+
+While you can't edit all YAML constructs, you can generally replace them and
+roundtrip them thanks to tree-sitter-yaml.
+
+This was roughly inspired by `pyupgrade` which combined AST-based parsing with
+more low-level edits.
 
 # Version Compat
 
