@@ -27,9 +27,13 @@ class BoxedYaml:
     def __post_init__(self) -> None:
         pass
 
-    def span(self) -> tuple[int, int]:
-        # TODO feels like this should be +1 end
-        return (self.node.start_byte, self.node.end_byte)
+    @property
+    def start_byte(self) -> int:
+        return self.node.start_byte
+
+    @property
+    def end_byte(self) -> int:
+        return self.node.end_byte
 
 
 def boxyaml(node: Node, stream: "YamlStream") -> BoxedYaml:

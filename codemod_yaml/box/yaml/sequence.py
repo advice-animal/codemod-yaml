@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Union
+from typing import Any, Union
 
-from ..py import BoxedPy
+from ..py import BoxedPy, boxpy
+from ..py.sequence import PyBlockSequenceItem
 
 from ..yaml import BoxedYaml, boxyaml, register
 
@@ -20,6 +21,16 @@ class YamlBlockSequence(BoxedYaml):
         self._items = {}
         self._count = len(self.node.children[0].children)
 
+    def append(self, other: Any) -> None:
+        if not isinstance(other, BoxedPy):
+            other = boxpy(other)
+
+        seq_item = PyBlockSequenceItem(other)
+
+        self.stream.edit(self, seq_item, append=True)
+        self._items[self._count] = other
+        self._count += 1
+
     def __getitem__(self, index: int) -> Union[BoxedYaml, BoxedPy]:
         if index in self._items:
             value = self._items[index].value  # note: lazy property
@@ -32,6 +43,21 @@ class YamlBlockSequence(BoxedYaml):
         value = node.value
         assert isinstance(value, BoxedYaml)
         return value
+
+    def __setitem__(self, index: int, other: Any) -> None:
+        if not isinstance(other, BoxedPy):
+            other = boxpy(other)
+
+        t = self[index]
+        if isinstance(t, BoxedYaml):
+            self.stream.edit(t, other)
+        self._items[index].value = other
+
+    def __delitem__(self, index: int) -> None:
+        self[index]
+        if isinstance(self._items[index], BoxedYaml):
+            self.stream.edit(self._items[index], None)
+        # TODO fix count, etc
 
 
 @register("block_sequence_item")
@@ -51,3 +77,8 @@ class YamlBlockSequenceItem(BoxedYaml):
         self._value = other
 
     value = property(get_value, set_value)
+
+    @property
+    def end_byte(self) -> int:
+        # TODO conditional
+        return self.node.end_byte + 1

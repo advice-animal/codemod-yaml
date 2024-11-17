@@ -1,6 +1,6 @@
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
-from ..py import BoxedPy
+from ..py import BoxedPy, boxpy
 
 from ..yaml import BoxedYaml, boxyaml, register
 
@@ -35,9 +35,30 @@ class YamlBlockMapping(BoxedYaml):
                 return kv.value
         raise KeyError(key)
 
+    def __setitem__(self, key: str, value: Any) -> None:
+        py_item = boxpy(value)
+        if isinstance(self[key], BoxedYaml):
+            self.stream.edit(self[key], py_item)  # type: ignore[arg-type]
+        else:
+            raise ValueError(self[key])  # TODO append
+        c = self._cache[key]
+        assert c is not None  # TODO re-add deleted items
+        c.value = py_item
+
+    def __delitem__(self, key: str) -> None:
+        # TODO if self.key[cookie], self._stream.record_delete(cookie)
+        self[key]
+        c = self._cache[key]
+        if isinstance(c, BoxedYaml):
+            self.stream.edit(c, None)
+        self._cache[key] = None
+
 
 @register("block_mapping_pair")
 class YamlBlockMappingPair(BoxedYaml):
+    key: BoxedYaml
+    value: Union[BoxedPy, BoxedYaml]
+
     def __post_init__(self) -> None:
         self.key = boxyaml(node=self.node.children[0], stream=self.stream)
         self.value = boxyaml(node=self.node.children[2], stream=self.stream)
