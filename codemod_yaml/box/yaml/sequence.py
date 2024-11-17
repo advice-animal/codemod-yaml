@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, overload, Sequence, Union
 
 from ..py import BoxedPy, boxpy
 from ..py.sequence import PyBlockSequenceItem
@@ -14,15 +14,15 @@ __all__ = ["YamlBlockSequence", "YamlBlockSequenceItem"]
 class YamlBlockSequence(BoxedYaml):
     # block_sequence > block_sequence_item > flow_node > $value
 
-    _count: int
-    _items: dict[int, YamlBlockSequenceItem]
+    _items: list[YamlBlockSequenceItem]
 
     def __post_init__(self) -> None:
-        self._items = {}
-        self._count = len(self.node.children[0].children)
+        self._items = [
+            boxyaml(child, stream=self.stream)  # type: ignore[misc]
+            for child in self.node.children[0].children
+        ]
         # It shouldn't be possible to parse a zero-length sequence, I hope.
-        self._ensure(self._count - 1)
-        self._yaml_style = self._items[self._count - 1].yaml_style
+        self._yaml_style = self._items[-1].yaml_style
 
     def append(self, other: Any) -> None:
         if not isinstance(other, BoxedPy):
@@ -31,16 +31,41 @@ class YamlBlockSequence(BoxedYaml):
         seq_item = PyBlockSequenceItem(other, yaml_style=self._yaml_style)
 
         self.stream.edit(self, seq_item, append=True)
-        self._items[self._count] = other
-        self._count += 1
+        self._items.append(other)
 
-    def __getitem__(self, index: int) -> Union[BoxedYaml, BoxedPy]:
-        self._ensure(index)
+    @overload
+    def __getitem__(self, index: slice) -> list[Union[BoxedYaml, BoxedPy]]: ...
+    @overload
+    def __getitem__(self, index: int) -> Union[BoxedYaml, BoxedPy]: ...
+    def __getitem__(self, index):  # type: ignore[no-untyped-def]
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self._items))
+            return [self[i] for i in range(start, stop, step)]
+
         value = self._items[index].value  # note: lazy property
         assert isinstance(value, (BoxedYaml, BoxedPy))
         return value
 
-    def __setitem__(self, index: int, other: Any) -> None:
+    @overload
+    def __setitem__(self, index: slice, other: Sequence[Any]) -> None: ...
+    @overload
+    def __setitem__(self, index: int, other: Any) -> None: ...
+    def __setitem__(self, index, other):  # type: ignore[no-untyped-def]
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self._items))
+
+            if step == 1 and stop == len(self._items):
+                # Only handle the replace-end cases for now, since it's easy
+                del self[index]
+                for x in other:
+                    self.append(x)
+            else:
+                assert len(other) == (stop - start) // step
+                it = iter(other)
+                for i in range(start, stop, step):
+                    self[i] = next(it)
+            return
+
         if not isinstance(other, BoxedPy):
             other = boxpy(other)
 
@@ -49,17 +74,21 @@ class YamlBlockSequence(BoxedYaml):
             self.stream.edit(t, other)
         self._items[index].value = other
 
-    def __delitem__(self, index: int) -> None:
-        self._ensure(index)
+    @overload
+    def __delitem__(self, index: slice) -> None: ...
+    @overload
+    def __delitem__(self, index: int) -> None: ...
+    def __delitem__(self, index):  # type: ignore[no-untyped-def]
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self._items))
+            for i in range(start, stop, step):
+                if isinstance(self._items[i], BoxedYaml):
+                    self.stream.edit(self._items[i], None)
+            del self._items[index]
+            return
         if isinstance(self._items[index], BoxedYaml):
             self.stream.edit(self._items[index], None)
-        # TODO fix count, etc
-
-    def _ensure(self, index: int) -> None:
-        if index not in self._items:
-            node = boxyaml(self.node.children[0].children[index], stream=self.stream)
-            assert isinstance(node, YamlBlockSequenceItem)
-            self._items[index] = node
+        del self._items[index]
 
 
 @register("block_sequence_item")

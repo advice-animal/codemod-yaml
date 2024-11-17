@@ -4,7 +4,7 @@ from typing import Optional
 
 from ..style import YamlStyle
 
-from . import BoxedPy, boxpy
+from . import BoxedPy, boxpy, register
 
 __all__ = [
     "PyBlockSequence",
@@ -12,14 +12,13 @@ __all__ = [
 ]
 
 
+@register(list)
 class PyBlockSequence(BoxedPy):
-    register_py_type = list
-
     _items: list[PyBlockSequenceItem]
 
     def __post_init__(self) -> None:
         self._items = []
-        for child in self.value.children:
+        for child in self.value:
             self._items.append(PyBlockSequenceItem(boxpy(child)))
 
     def to_bytes(self) -> bytes:

@@ -73,3 +73,32 @@ def test_nested_sequence():
     assert stream.text == b"-\n  -  a\n  -  c\n"
     stream[0].append(PyScalarString("d", QuoteStyle.BARE))
     assert stream.text == b"-\n  -  a\n  -  c\n  -  d\n"
+
+def test_slicing():
+    stream = parse_str("""\
+-
+  -  a
+  -  b
+  -  c
+  -  d
+""")
+    assert stream[0][0:2] == ["a", "b"]
+    assert stream[0][1:3] == ["b", "c"]
+    assert stream[0][1:] == ["b", "c", "d"]
+    assert stream[0][:2] == ["a", "b"]
+    assert stream[0][0:3:2] == ["a", "c"]
+    assert stream[0][1:3:2] == ["b"]
+    assert stream[0][1::2] == ["b", "d"]
+    assert stream[0][1:3:1] == ["b", "c"]
+
+def test_slicing_modification():
+    stream = parse_str("""\
+-
+    -   a
+""")
+    stream[0][:] = [PyScalarString("b", QuoteStyle.BARE), PyScalarString("c", QuoteStyle.BARE)]
+    assert stream.text == b"""\
+-
+    -   b
+    -   c
+"""
