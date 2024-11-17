@@ -13,7 +13,7 @@ class QuoteStyle(enum.IntEnum):
     BARE = 3
 
 
-BARE_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]+$")
+BARE_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 __all__ = ["PyScalarString", "PyScalarInt", "QuoteStyle"]
 

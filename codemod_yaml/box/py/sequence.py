@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import Optional
+
+from ..style import YamlStyle
+
 from . import BoxedPy, boxpy
 
 __all__ = [
@@ -28,7 +32,16 @@ class PyBlockSequence(BoxedPy):
 
 
 class PyBlockSequenceItem(BoxedPy):
+    def __init__(self, value: BoxedPy, yaml_style: Optional[YamlStyle] = None) -> None:
+        super().__init__(value)
+        self.yaml_style = yaml_style or YamlStyle()
 
     def to_str(self) -> str:
         # TODO this ought to be bytes, and wrap
-        return "- " + self.value.to_str() + "\n"  # type: ignore[no-any-return]
+        return (  # type: ignore[no-any-return]
+            self.yaml_style.sequence_whitespace_before_dash
+            + "-"
+            + self.yaml_style.sequence_whitespace_after_dash
+            + self.value.to_str()
+            + "\n"
+        )

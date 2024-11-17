@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from .py.scalar import QuoteStyle
+
 
 @dataclass
-class YamlBlockSequenceStyle:
+class YamlStyle:
     """
     Stores stylistic preferences about how sequences get formatted.
 
@@ -37,16 +39,6 @@ class YamlBlockSequenceStyle:
             + self.sequence_whitespace_after_dash
         )
 
-
-@dataclass
-class YamlBlockMappingStyle:
-    """
-    Stores stylistic preferences about how mappings get formatted.
-
-    These are really only intended to be set as global defaults or set on a
-    single mapping item to match its preceeding one.
-    """
-
     #: key<>:<>value <-- before/after colon`
     #: key<>:
     #:   value <-- line with indent
@@ -56,3 +48,5 @@ class YamlBlockMappingStyle:
     mapping_flow_space_after_colon: str = " "
     mapping_flow_on_next_line: bool = False
     mapping_next_line_indent: str = "  "  #: arbitrary, must be at least one space
+
+    quote_style: QuoteStyle = QuoteStyle.AUTO
