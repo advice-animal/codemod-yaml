@@ -31,7 +31,7 @@ class YamlBlockSequence(BoxedYaml, UserList):
 
         seq_item = PyBlockSequenceItem(other, yaml_style=self._yaml_style)
 
-        self.stream.edit(self, seq_item, append=True)
+        other.cookie = self.stream.edit(self, seq_item, append=True)
         self._items.append(other)
 
     @overload
@@ -42,7 +42,6 @@ class YamlBlockSequence(BoxedYaml, UserList):
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self._items))
             return [self[i] for i in range(start, stop, step)]
-
         value = self._items[index].value  # note: lazy property
         assert isinstance(value, (BoxedYaml, BoxedPy))
         return value
@@ -72,7 +71,7 @@ class YamlBlockSequence(BoxedYaml, UserList):
 
         t = self[index]
         if isinstance(t, BoxedYaml):
-            self.stream.edit(t, other)
+            other.cookie = self.stream.edit(t, other)
         self._items[index].value = other
 
     @overload
@@ -89,7 +88,15 @@ class YamlBlockSequence(BoxedYaml, UserList):
             return
         if isinstance(self._items[index], BoxedYaml):
             self.stream.edit(self._items[index], None)
+        elif isinstance(self._items[index], BoxedPy):
+            self.stream.cancel_cookie(self._items[index].cookie)  # type: ignore[attr-defined]
         del self._items[index]
+
+    def _ensure(self, index: int) -> None:
+        if index not in self._items:
+            node = boxyaml(self.node.children[0].children[index], stream=self.stream)
+            assert isinstance(node, YamlBlockSequenceItem)
+            self._items[index] = node
 
 
 @register("block_sequence_item")

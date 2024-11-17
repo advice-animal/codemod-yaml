@@ -102,3 +102,11 @@ def test_slicing_modification():
     -   b
     -   c
 """
+
+def test_cookie_sequence():
+    stream = parse_str("""\
+- a
+""")
+    stream.append("b")
+    del stream[1]
+    assert stream.text == b"- a\n"

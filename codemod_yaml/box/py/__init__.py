@@ -19,6 +19,7 @@ class BoxedPy:
         self.base_indent = 0
         #: Not all BoxedPy need to know their style; this looks up the global default if necessary.
         self.style = None
+        self.cookie = None
 
         self.__post_init__()
 
