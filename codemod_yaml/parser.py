@@ -115,7 +115,7 @@ class YamlStream:
         return cookie
 
     def _remove_wholly_contained_edits(self, start: int, end: int) -> None:
-        print(self._edits)
+        # print(self._edits)
         overlapped_cookies: set[int] = set()
         for k, v in self._edits.items():
             if v.start >= start and v.end <= end and v.start != v.end:
@@ -156,5 +156,5 @@ def parse_str(data: str) -> YamlStream:
 
 
 def parse(data: bytes) -> YamlStream:
-    print(type(data))
+    # print(type(data))
     return YamlStream(tree=parser.parse(data), original_bytes=data)
