@@ -1,0 +1,12 @@
+style: setuptools
+options:
+  setuptools:
+    deps:
+      - pytest
+  tool-versions:
+    python: "3.10"
+    java:
+      "11"
+    nodejs: ["14", "16"] # can't edit/assign this yet
+  test-versions:
+    - "3.9"

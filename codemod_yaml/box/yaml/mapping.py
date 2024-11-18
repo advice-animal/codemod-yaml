@@ -26,7 +26,7 @@ class YamlBlockMapping(BoxedYaml):
 
         for pair in self.node.children[0].children:
             print(repr(pair.children))
-            assert pair.type == "block_mapping_pair"
+            assert pair.type == "block_mapping_pair", pair.type
             pair_key = str(boxyaml(node=pair.children[0], stream=self.stream))
             if key == pair_key:
                 kv = boxyaml(node=pair, stream=self.stream)
