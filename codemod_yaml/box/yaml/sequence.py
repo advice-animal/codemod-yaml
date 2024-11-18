@@ -89,7 +89,7 @@ class YamlBlockSequence(BoxedYaml, UserList):
         if isinstance(self._items[index], BoxedYaml):
             self.stream.edit(self._items[index], None)
         elif isinstance(self._items[index], BoxedPy):
-            self.stream.cancel_cookie(self._items[index].cookie)  # type: ignore[attr-defined]
+            self.stream.cancel_cookie(self._items[index].cookie)
         del self._items[index]
 
     def _ensure(self, index: int) -> None:
