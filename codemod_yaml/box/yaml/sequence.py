@@ -100,7 +100,9 @@ class YamlBlockSequence(BoxedYaml, UserList):
 
     @property
     def end_byte(self) -> int:
-        if self.node.text[-1:] == b"\n":
+        text = self.node.text
+        assert isinstance(text, bytes)
+        if text[-1:] == b"\n":
             return self.node.end_byte
         else:
             return self.node.end_byte + 1
@@ -146,7 +148,9 @@ class YamlBlockSequenceItem(BoxedYaml):
 
     @property
     def end_byte(self) -> int:
-        if self.node.text[-1:] == b"\n":
+        text = self.node.text
+        assert isinstance(text, bytes)
+        if text[-1:] == b"\n":
             return self.node.end_byte
         else:
             return self.node.end_byte + 1
