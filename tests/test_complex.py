@@ -105,14 +105,16 @@ def test_tool_version_delete_nodejs():
 def test_test_version_python():
     assert COMPLEX_TEXT.endswith("\n")  # Editing last item gets mangled otherwise
     stream = parse_str(COMPLEX_TEXT)
-    assert stream["options"]["test-versions"] == ["3.9"]
-    stream["options"]["test-versions"][:] = ["3.12", "3.13"]
+    assert stream["options"]["test-versions"] == ["3.8", "3.9"]
+    assert stream["options"]["test-versions"] != ["3.8"] # compare the whole thing
+    assert stream["options"]["test-versions"] != ["3.9", "3.8"] # order matters
+    stream["options"]["test-versions"][1:] = ["3.12", "3.13"]
     output = moreorless.unified_diff(COMPLEX_TEXT, stream.text.decode("utf-8"), filename="complex.yaml", n=0)
 
     assert output =="""\
 --- a/complex.yaml
 +++ b/complex.yaml
-@@ -12 +12,2 @@
+@@ -13 +13,2 @@
 -    - "3.9"
 +    - "3.12"
 +    - "3.13"

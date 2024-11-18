@@ -9,4 +9,5 @@ options:
       "11"
     nodejs: ["14", "16"] # can't edit/assign this yet
   test-versions:
+    - "3.8"
     - "3.9"
