@@ -10,6 +10,7 @@ COMPLEX_TEXT = COMPLEX_PATH.read_text()
 
 def test_style_automatic_string():
     stream = parse_str(COMPLEX_TEXT)
+    assert stream["style"] == "setuptools"
     stream["style"] = "hatch"
     output = moreorless.unified_diff(COMPLEX_TEXT, stream.text.decode("utf-8"), filename="complex.yaml", n=0)
 
@@ -104,6 +105,7 @@ def test_tool_version_delete_nodejs():
 def test_test_version_python():
     assert COMPLEX_TEXT.endswith("\n")  # Editing last item gets mangled otherwise
     stream = parse_str(COMPLEX_TEXT)
+    assert stream["options"]["test-versions"] == ["3.9"]
     stream["options"]["test-versions"][:] = ["3.12", "3.13"]
     output = moreorless.unified_diff(COMPLEX_TEXT, stream.text.decode("utf-8"), filename="complex.yaml", n=0)
 

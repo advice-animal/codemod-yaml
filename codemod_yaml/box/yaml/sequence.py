@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, overload, Sequence, Union
 
+from ..base_types import UserList
 from ..py import BoxedPy, boxpy
 from ..py.sequence import PyBlockSequenceItem
 from ..style import YamlStyle
@@ -11,10 +12,10 @@ __all__ = ["YamlBlockSequence", "YamlBlockSequenceItem"]
 
 
 @register("block_node.block_sequence")
-class YamlBlockSequence(BoxedYaml):
+class YamlBlockSequence(BoxedYaml, UserList):
     # block_sequence > block_sequence_item > flow_node > $value
 
-    _items: list[YamlBlockSequenceItem]
+    _items: list[YamlBlockSequenceItem]  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         self._items = [
@@ -141,3 +142,6 @@ class YamlBlockSequenceItem(BoxedYaml):
             sequence_whitespace_before_dash=leading_whitespace.decode("utf-8"),
             sequence_whitespace_after_dash=after_dash.decode("utf-8"),
         )
+
+    def __eq__(self, other: object) -> bool:
+        return self.value == other  # type: ignore[no-any-return]

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from ..base_types import UserList
 from ..style import YamlStyle
 
 from . import BoxedPy, boxpy, register
@@ -13,8 +14,8 @@ __all__ = [
 
 
 @register(list)
-class PyBlockSequence(BoxedPy):
-    _items: list[PyBlockSequenceItem]
+class PyBlockSequence(BoxedPy, UserList):
+    _items: list[PyBlockSequenceItem]  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         self._items = []
@@ -44,3 +45,6 @@ class PyBlockSequenceItem(BoxedPy):
             + self.value.to_str()
             + "\n"
         )
+
+    def __eq__(self, other: object) -> bool:
+        return self.value == other  # type: ignore[no-any-return]
