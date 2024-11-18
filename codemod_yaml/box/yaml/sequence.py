@@ -98,6 +98,13 @@ class YamlBlockSequence(BoxedYaml, UserList):
             assert isinstance(node, YamlBlockSequenceItem)
             self._items[index] = node
 
+    @property
+    def end_byte(self) -> int:
+        if self.node.text[-1:] == b"\n":
+            return self.node.end_byte
+        else:
+            return self.node.end_byte + 1
+
 
 @register("block_sequence_item")
 class YamlBlockSequenceItem(BoxedYaml):
@@ -124,14 +131,25 @@ class YamlBlockSequenceItem(BoxedYaml):
             self.node.start_byte - expected_indent : self.node.start_byte
         ]
         assert (
+            self.stream._original_bytes[
+                self.node.start_byte
+                - expected_indent
+                - 1 : self.node.start_byte
+                - expected_indent
+            ]
+            == b"\n"
+        )
+        assert (
             leading_whitespace == b" " * expected_indent
         )  # can't handle same-line block like "- - a" yet
         return self.node.start_byte - expected_indent
 
     @property
     def end_byte(self) -> int:
-        # TODO conditional
-        return self.node.end_byte + 1
+        if self.node.text[-1:] == b"\n":
+            return self.node.end_byte
+        else:
+            return self.node.end_byte + 1
 
     @property
     def yaml_style(self) -> YamlStyle:

@@ -103,6 +103,26 @@ def test_slicing_modification():
     -   c
 """
 
+def test_combo_modification():
+    stream = parse_str("""\
+a:
+ - 1
+ - 2
+
+b:
+""")
+    # tree-sitter appears to give the sequence all the trailing newlines UNLESS
+    # followed by a map key, in which case nobody gets them.
+    stream["a"][:] = [3, 4, 5]
+    assert stream.text == b"""\
+a:
+ - 3
+ - 4
+ - 5
+
+b:
+"""
+
 def test_cookie_sequence():
     stream = parse_str("""\
 - a
