@@ -3,7 +3,7 @@ This demonstrates that all the pieces of `complex.yaml` can be edited in a strai
 """
 import pytest
 from pathlib import Path
-from codemod_yaml import parse_str, PyScalarString, QuoteStyle
+from codemod_yaml import parse_str, item, String, QuoteStyle
 import moreorless
 COMPLEX_PATH= Path(__file__).parent / "complex.yaml"
 COMPLEX_TEXT = COMPLEX_PATH.read_text()
@@ -24,7 +24,7 @@ def test_style_automatic_string():
 
 def test_style_bare_string():
     stream = parse_str(COMPLEX_TEXT)
-    stream["style"] = PyScalarString("hatch", QuoteStyle.BARE)
+    stream["style"] = String("hatch", QuoteStyle.BARE)
     output = moreorless.unified_diff(COMPLEX_TEXT, stream.text.decode("utf-8"), filename="complex.yaml", n=0)
 
     assert output =="""\
@@ -74,7 +74,6 @@ def test_tool_version_delete_java():
 -      "11"
 """
 
-@pytest.mark.xfail
 def test_tool_version_modify_flow_list_nodejs():
     stream = parse_str(COMPLEX_TEXT)
     stream["options"]["tool-versions"]["nodejs"] = ["99"]
@@ -83,13 +82,12 @@ def test_tool_version_modify_flow_list_nodejs():
     assert output =="""\
 --- a/complex.yaml
 +++ b/complex.yaml
-@@ -8,2 +7,0 @@
--    nodejs: ["14", "16"]
+@@ -10 +10,2 @@
+-    nodejs: ["14", "16"]  # comment
 +    nodejs:
 +      - "99"
 """
 
-@pytest.mark.xfail
 def test_tool_version_delete_nodejs():
     stream = parse_str(COMPLEX_TEXT)
     del stream["options"]["tool-versions"]["nodejs"]
@@ -98,8 +96,8 @@ def test_tool_version_delete_nodejs():
     assert output =="""\
 --- a/complex.yaml
 +++ b/complex.yaml
-@@ -8,2 +7,0 @@
--    nodejs: ["14", "16"]
+@@ -10 +9,0 @@
+-    nodejs: ["14", "16"]  # comment
 """
 
 def test_test_version_python():
@@ -114,7 +112,7 @@ def test_test_version_python():
     assert output =="""\
 --- a/complex.yaml
 +++ b/complex.yaml
-@@ -13 +13,2 @@
+@@ -14 +14,2 @@
 -    - "3.9"
 +    - "3.12"
 +    - "3.13"

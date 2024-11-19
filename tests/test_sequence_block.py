@@ -1,5 +1,7 @@
+import pytest
+
 from codemod_yaml import parse_str
-from codemod_yaml import QuoteStyle, PyScalarString
+from codemod_yaml.items import String, QuoteStyle
 
 def test_simple_sequence():
     stream = parse_str("- foo\n- bar\n")
@@ -16,16 +18,16 @@ def test_simple_sequence():
 
 def test_edit_sequence():
     stream = parse_str("- foo\n- bar\n")
-    stream.append(PyScalarString("baz", QuoteStyle.BARE))
+    stream.append(String("baz", QuoteStyle.BARE))
     assert stream.text == b"- foo\n- bar\n- baz\n"
-    stream.append(PyScalarString("zab", QuoteStyle.BARE))
+    stream.append(String("zab", QuoteStyle.BARE))
     assert stream.text == b"- foo\n- bar\n- baz\n- zab\n"
 
 def test_edit_sequence2():
     stream = parse_str("- foo\n- bar\n- baz\n")
     del stream[1]
     assert stream.text == b"- foo\n- baz\n"
-    stream.append(PyScalarString("zab", QuoteStyle.BARE))
+    stream.append(String("zab", QuoteStyle.BARE))
     assert stream.text == b"- foo\n- baz\n- zab\n"
 
 def test_int_sequence():
@@ -46,9 +48,12 @@ def test_string_sequence():
     assert stream[0] == "a"
     assert stream[1] == "b"
     assert stream[2] == "c"
+    # TODO actually an xfail
     assert stream[3] == "d"
     # didn't make any edits, this should be fine
     assert stream.text == b"- a\n- \"b\"\n- 'c'\n- |\n  d\n"
+    stream[3] = "x"
+    assert stream.text == b"- a\n- \"b\"\n- 'c'\n- \"x\"\n"
 
 def test_nested_sequence():
     stream = parse_str("""\
@@ -62,7 +67,7 @@ def test_nested_sequence():
     assert stream[0][2] == "c"
     # didn't make any edits, this should be fine
     assert stream.text == b"-\n  -  a\n  -  b\n  -  c\n"
-    stream[0][1] = PyScalarString("new", QuoteStyle.BARE)
+    stream[0][1] = String("new", QuoteStyle.BARE)
     assert stream.text == b"""\
 -
   -  a
@@ -71,7 +76,7 @@ def test_nested_sequence():
 """
     del stream[0][1]
     assert stream.text == b"-\n  -  a\n  -  c\n"
-    stream[0].append(PyScalarString("d", QuoteStyle.BARE))
+    stream[0].append(String("d", QuoteStyle.BARE))
     assert stream.text == b"-\n  -  a\n  -  c\n  -  d\n"
 
 def test_slicing():
@@ -96,7 +101,7 @@ def test_slicing_modification():
 -
     -   a
 """)
-    stream[0][:] = [PyScalarString("b", QuoteStyle.BARE), PyScalarString("c", QuoteStyle.BARE)]
+    stream[0][:] = [String("b", QuoteStyle.BARE), String("c", QuoteStyle.BARE)]
     assert stream.text == b"""\
 -
     -   b
@@ -130,3 +135,13 @@ def test_cookie_sequence():
     stream.append("b")
     del stream[1]
     assert stream.text == b"- a\n"
+
+def test_nested():
+    stream = parse_str("""\
+-
+ - a
+ - b
+""")
+    stream[0].extend(("c", "d"))
+    assert stream.text == b"-\n - a\n - b\n - \"c\"\n - \"d\"\n"
+    

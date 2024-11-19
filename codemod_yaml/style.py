@@ -1,6 +1,4 @@
-from dataclasses import dataclass
-
-from .py.scalar import QuoteStyle
+from dataclasses import dataclass, replace
 
 
 @dataclass
@@ -12,11 +10,15 @@ class YamlStyle:
     single sequence item to match its preceeding one.
     """
 
-    #: - foo <-- before/after dash
+    #: the number of (presumably whitespace) characters to indent this item
+    #: (and all its children).  Additional hanging indent on mappings is
+    #: `mapping_next_line_indent` below.
+    base_indent: int = 0
+    increment_indent: int = 2
+
+    #: - foo <-- after dash
     #:   bar <-- line with indent
-    sequence_whitespace_before_dash: str = " "
-    sequence_whitespace_after_dash: str = " "
-    sequence_whitespace_indent: str = "   "  # <-- overwritten in post init
+    sequence_whitespace_after_dash: int = 1
 
     #: preference for whether single-line flow should be forced on their own
     #: line (more verbose, and fairly uncommon in documents I've seen), e.g.
@@ -27,26 +29,28 @@ class YamlStyle:
     #: consistency, because something like seq of seq on same line is weird:
     #: -
     #:   - foo <-- line with whitespace_indent + whitespace_before_dash
+    sequence_whitespace_indent: int = 2
     sequence_flow_on_next_line: bool = False
 
     def __post_init__(self) -> None:
         """
         Although it's possible to add additional indent, we'll only output lined-up ourselves for consistency.
         """
-        self.sequence_whitespace_indent = (
-            self.sequence_whitespace_before_dash
-            + " "
-            + self.sequence_whitespace_after_dash
-        )
+        self.sequence_whitespace_indent = self.sequence_whitespace_after_dash + 1
 
     #: key<>:<>value <-- before/after colon`
     #: key<>:
     #:   value <-- line with indent
     #:
-    #: technically whitespace_before_key could also be a thing, but we'll track that as obj.base_indent()
-    mapping_whitespace_before_colon: str = ""
-    mapping_flow_space_after_colon: str = " "
+    mapping_whitespace_before_colon: int = 0
+    mapping_flow_space_after_colon: int = 1
     mapping_flow_on_next_line: bool = False
-    mapping_next_line_indent: str = "  "  #: arbitrary, must be at least one space
+    mapping_next_line_indent: int = 2  #: arbitrary, must be at least one space
 
-    quote_style: QuoteStyle = QuoteStyle.AUTO
+    # quote_style: QuoteStyle = QuoteStyle.AUTO
+
+    def indent(self, n: int = -1) -> "YamlStyle":
+        if n == -1:
+            return replace(self, base_indent=self.base_indent + self.increment_indent)
+        else:
+            return replace(self, base_indent=self.base_indent + n)
