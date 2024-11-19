@@ -3,15 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import count
 from logging import getLogger
-from typing import Any, Dict, Optional, Union
+from typing import Optional
 
 from tree_sitter import Language, Parser, Tree
 from tree_sitter_yaml import language as yaml_language
 
-from .box.py import BoxedPy
-from .box.yaml import BoxedYaml, boxyaml
-from .box.yaml.mapping import YamlBlockMapping
-from .box.yaml.sequence import YamlBlockSequence
+from .base import Item, YamlStream
+from .items import item
 
 logger = getLogger(__name__)
 parser = Parser(Language(yaml_language()))
@@ -31,59 +29,28 @@ class PendingEdit:
     end: int
     action: int
     cookie: int
-    item: Optional[BoxedPy] = None
+    item: Optional[Item] = None
 
 
-class YamlStream:
-    """
-    The main object of loading and saving yaml files.
-
-    For example, YamlStream.from_string(...).text is the simplest roundtrip.
-
-    The document must already have some structure, e.g. the root should be a
-    block map or sequence.  This is for making targeted edits to that.
-    """
-
-    _tree: Tree
-    _root: Union[YamlBlockMapping, YamlBlockSequence]
-    _original_bytes: bytes
-    _edits: Dict[int, PendingEdit]
-
+class ContainerYamlStream(YamlStream):
     def __init__(self, tree: Tree, original_bytes: bytes) -> None:
-        self._tree = tree
-        self._original_bytes = original_bytes
-        self._edits = {}
+        super().__init__(tree, original_bytes)
+        self._root: Item = self._get_root()
+        self._edits: dict[int, PendingEdit] = {}
 
-        # TODO test more with streams that start with "---"
-        doc = self._tree.root_node.children[0]
-
-        # We forward getitem etc to this object
-        node = boxyaml(node=doc.children[0], stream=self)
-        assert isinstance(node, (YamlBlockMapping, YamlBlockSequence))
-        self.root = node
-
-    # Forwarding methods
-
-    def __getitem__(self, key: Union[int, str]) -> Any:
-        return self.root[key]  # type: ignore[index]
-
-    def __setitem__(self, key: Union[int, str], value: Any) -> None:
-        self.root[key] = value  # type: ignore[index]
-
-    def __delitem__(self, key: Union[int, str]) -> None:
-        del self.root[key]  # type: ignore[arg-type]
-
-    def append(self, other: Any) -> None:
-        self.root.append(other)  # type: ignore[union-attr]
+    def _get_root(self) -> Item:
+        stream = self._tree.root_node
+        for potential_document in stream.children:
+            if potential_document.type == "document":
+                return item(node=potential_document.children[0], stream=self)
+        raise NotImplementedError(str(self._tree.root_node))
 
     # Private API for editing
 
     def cancel_cookie(self, cookie: int) -> None:
         self._edits.pop(cookie, None)
 
-    def edit(
-        self, item: BoxedYaml, new_item: Optional[BoxedPy], append: bool = False
-    ) -> int:
+    def edit(self, item: Item, new_item: Optional[Item], append: bool = False) -> int:
         """
         Changes `item` (read from yaml) to `new_item` (a boxed python object).
 
@@ -104,6 +71,7 @@ class YamlStream:
         cookie = next(COOKIE_GENERATOR)
         start = item.start_byte
         end = item.end_byte
+        print("EDIT", cookie, item, start, end, self._original_bytes[start:end])
         if new_item is None:
             self._remove_wholly_contained_edits(start, end)
             self._edits[cookie] = PendingEdit(start, end, DELETE, cookie, None)
@@ -131,10 +99,10 @@ class YamlStream:
         # TODO verify edits are non-overlapping
         for edit in sorted(self._edits.values(), reverse=True):
             if edit.item:
-                new_bytes = edit.item.to_bytes()
+                new_bytes = edit.item.to_string().encode("utf-8")
             else:
                 new_bytes = b""
-            logger.warning(
+            logger.debug(
                 "Apply edit: %r->%r @ %r",
                 tmp[edit.start : edit.end],
                 new_bytes,
@@ -143,7 +111,7 @@ class YamlStream:
             tmp = tmp[: edit.start] + new_bytes + tmp[edit.end :]
             # TODO restore tree-sitter edits if we can come up with the line/col values
             # self._tree.edit(edit.start, edit.end, edit.start + len(new_bytes), (0, 0), (0, 0))
-        logger.warning("New text: %r", tmp)
+        logger.debug("New text: %r", tmp)
         tmp = tmp.lstrip(b"\n")
         # TODO restore this as verification we made valid edits
         # assert parser.parse(tmp, old_tree=self._tree).root_node.text == tmp
@@ -157,4 +125,4 @@ def parse_str(data: str) -> YamlStream:
 
 def parse(data: bytes) -> YamlStream:
     # print(type(data))
-    return YamlStream(tree=parser.parse(data), original_bytes=data)
+    return ContainerYamlStream(tree=parser.parse(data), original_bytes=data)
