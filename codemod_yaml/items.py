@@ -267,6 +267,9 @@ class Sequence(BlockItem, list[Item]):
         else:
             raise NotImplementedError
 
+    def __hash__(self) -> int:  # type: ignore[override]
+        return hash(tuple(self))
+
     def __eq__(self, other: Any) -> bool:
         if len(self) != len(other):
             return False

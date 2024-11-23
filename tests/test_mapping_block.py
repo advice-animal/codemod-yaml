@@ -1,4 +1,5 @@
-from codemod_yaml import parse_str, item
+import pytest
+from codemod_yaml import parse_str, item, String, QuoteStyle
 
 def test_simple_mapping():
     stream = parse_str("key: val\n")
@@ -120,4 +121,38 @@ x: "new"
     # comment4
 # comment5
 z:
+"""
+
+def test_sequence_keys():
+    # Really, YAML?  I only let this work for one level of nesting.
+    stream = parse_str("""\
+[1, 2, 3]: foo
+""")
+    assert stream[(1, 2, 3)] == "foo"
+
+def test_anchors():
+    stream = parse_str("""\
+a: b
+c: &anchor
+  d: foo
+e: f
+g: *anchor
+""")
+    assert stream["a"] == "b"
+    assert stream["e"] == "f"
+
+    with pytest.raises(NotImplementedError):
+        stream["c"]
+    with pytest.raises(NotImplementedError):
+        stream["g"]
+
+    stream["a"] = [2, 3]
+    assert stream.text == b"""\
+a:
+  - 2
+  - 3
+c: &anchor
+  d: foo
+e: f
+g: *anchor
 """
