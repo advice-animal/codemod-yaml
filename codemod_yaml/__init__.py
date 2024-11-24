@@ -4,10 +4,11 @@ except ImportError:  # pragma: no cover
     __version__ = "dev"
 
 from .base import Item, YamlStream
-from .items import Integer, item, Mapping, Null, QuoteStyle, Sequence, String
+from .items import Float, Integer, item, Mapping, Null, QuoteStyle, Sequence, String
 from .parser import parse, parse_str
 
 __all__ = [
+    "Float",
     "Integer",
     "Item",
     "item",
