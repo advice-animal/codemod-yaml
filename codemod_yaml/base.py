@@ -19,7 +19,7 @@ class YamlStream(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def edit(self, item: Item, new_item: Optional[Item], append: bool = False) -> int:
+    def edit(self, item: Item, new_item: Optional[Item]) -> int:
         pass
 
     # Forwarding methods
