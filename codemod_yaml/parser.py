@@ -98,7 +98,7 @@ class ContainerYamlStream(YamlStream):
 
         # TODO verify edits are non-overlapping
         for edit in sorted(self._edits.values(), reverse=True):
-            if edit.item:
+            if edit.item is not None:
                 new_bytes = edit.item.to_string().encode("utf-8")
             else:
                 new_bytes = b""

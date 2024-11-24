@@ -8,6 +8,8 @@ from typing import Any, Iterable, Iterator, Optional, overload, SupportsIndex, U
 
 from tree_sitter import Node
 
+from ._types import _CustomDict, _CustomInt, _CustomList
+
 from .base import Item, YamlStream
 from .style import YamlStyle
 
@@ -36,7 +38,7 @@ class Null(Item):
         return other is None or isinstance(other, Null)
 
 
-class Integer(int, Item):
+class Integer(_CustomInt, Item):
     def __new__(
         cls,
         value: int,
@@ -67,6 +69,14 @@ class Integer(int, Item):
 
     def to_string(self) -> str:
         return str(self)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return int.__eq__(self, other)
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return int.__hash__(self)
 
 
 class QuoteStyle(enum.IntEnum):
@@ -195,15 +205,15 @@ class BlockItem(Item):
     def cascade_style(self, style: YamlStyle) -> None:
         assert hasattr(self, "_style")
         self._style = style
-        print("Set", type(self), style.base_indent)
+        #print("Set", type(self), style.base_indent, repr(self.to_string()))
         child_style = self.mod_style_for_children()
         for f in self.children():
-            print("  ", type(f))
+            #print("  ", type(f))
             if isinstance(f, BlockItem):
                 f.cascade_style(child_style)
 
 
-class Sequence(BlockItem, list[Item]):
+class Sequence(BlockItem, _CustomList[Item]):
     # flow_node > flow_sequence > flow_node > plain_scalar...
     # block_sequence > block_sequence_item > flow_node > $value
 
@@ -231,6 +241,9 @@ class Sequence(BlockItem, list[Item]):
             self._style = value[-1]._style
         else:
             self._style = YamlStyle()  # prevent inference
+
+    def __len__(self) -> int:
+        return list.__len__(self)
 
     @classmethod
     def from_yaml(cls, node: Node, stream: YamlStream) -> "Sequence":
@@ -454,7 +467,7 @@ class SequenceItem(BlockItem):
         return "".join(buf)
 
 
-class Mapping(dict[Item, Item], BlockItem):
+class Mapping(_CustomDict[Item, Item], BlockItem):
     # block_mapping > block_mapping_pair > key/value flow_node/block_node > $value
 
     def __new__(
@@ -541,6 +554,9 @@ class Mapping(dict[Item, Item], BlockItem):
 
     # TODO other dict methods, like setdefault, get, etc
 
+    def __len__(self) -> int:
+        return dict.__len__(self)
+
     def __contains__(self, key: Any) -> bool:
         return dict.__contains__(self, item(key))  # type: ignore[operator]
 
@@ -576,6 +592,19 @@ class Mapping(dict[Item, Item], BlockItem):
             self.anneal()
 
         dict.__delitem__(self, key)
+
+    def get(self, key: Any, default: Any = None) -> Item:
+        key = item(key)
+        return dict.get(self, key, default)  # type: ignore[no-any-return]
+
+    def keys(self) -> Any:
+        return dict.keys(self)
+
+    def values(self) -> Any:
+        return dict.values(self)
+
+    def items(self) -> Any:
+        return dict.items(self)
 
 
 class MappingPair(BlockItem):
