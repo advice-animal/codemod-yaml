@@ -69,6 +69,38 @@ class Integer(int, Item):
         return str(self)
 
 
+class Float(float, Item):
+    def __new__(
+        cls,
+        value: float,
+        original: Optional[Node] = None,
+        stream: Optional[YamlStream] = None,
+        annealed: bool = False,
+    ) -> Float:
+        return float.__new__(cls, value)
+
+    def __init__(
+        self,
+        value: float,
+        original: Optional[Node] = None,
+        stream: Optional[YamlStream] = None,
+        annealed: bool = False,
+    ) -> None:
+        super().__init__(original, stream, annealed)
+
+    @classmethod
+    def from_yaml(cls, node: Node, stream: YamlStream) -> Float:
+        assert node.text is not None
+        t = node.text.decode("utf-8")
+        # Special cases: [+-].inf .nan (case sensitive)
+        if t.endswith("inf") or t.endswith("nan"):
+            t = t.replace(".", "")
+        return cls(value=float(t), original=node, stream=stream, annealed=False)
+
+    def to_string(self) -> str:
+        return str(self)
+
+
 class QuoteStyle(enum.IntEnum):
     BARE_PREFERRED = 0
     SINGLE_PREFERRED = 1
@@ -745,6 +777,12 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
         elif (
             t.type == "flow_node"
             and t.children[0].type == "plain_scalar"
+            and t.children[0].children[0].type == "float_scalar"
+        ):
+            return Float.from_yaml(t, stream)
+        elif (
+            t.type == "flow_node"
+            and t.children[0].type == "plain_scalar"
             and t.children[0].children[0].type == "null_scalar"
         ):
             return Null.from_yaml(t, stream)
@@ -754,6 +792,8 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
             return Null()
         elif isinstance(t, int):
             return Integer(t)
+        elif isinstance(t, float):
+            return Float(t)
         elif isinstance(t, str):
             return String(t, QuoteStyle.DOUBLE_PREFERRED)
         elif isinstance(t, dict):
