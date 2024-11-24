@@ -1,14 +1,9 @@
 # codemod-yaml
 
-This library is for making targeted edits to YAML documents.  The core design goal is:
-
-1. Only change lines with *data* changes.
-
-While you can't edit all YAML constructs, you can generally replace them and
-roundtrip them thanks to tree-sitter-yaml.
-
-This was roughly inspired by `pyupgrade` which combined AST-based parsing with
-more low-level edits.
+This library makes surgical edits to YAML documents, based on tree-sitter and
+inspired by tomlkit and pyupgrade.  Preserves _all_ whitespace and formatting
+on lines that don't require changes, and generally within a line as well, so
+you can make minimal diffs in your codemod tools.
 
 # Basic Usage
 
@@ -20,17 +15,11 @@ if stream["version"] == ["2.7"]:
 somepath.write_bytes(stream.text)
 ```
 
-# Supported
-[x] round-tripping unedited sections verbatim
-[x] any valid yaml _after_ where you're editing
-[x] block maps with string keys
-[x] block sequences
-[x] python str/float/list/dict
-
 # Version Compat
 
-Usage of this library should work back to 3.7, but development (and mypy
-compatibility) only on 3.10-3.12.  Linting requires 3.12 for full fidelity.
+Usage of this library should work back to 3.9 (because of the tree-sitter dep),
+but development (and mypy compatibility) only on 3.10-3.12.  Linting requires
+3.12+ for full fidelity.
 
 # Versioning
 
