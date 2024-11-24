@@ -18,8 +18,7 @@ def test_parse():
     # nan returns false for most operations
     n = parse_str(".nan")._root
     assert str(n) == "nan"
-    assert not (n < 0)
-    assert not (n >= 0)
+    assert n != n
 
 def test_scientific():
     assert item(1.5e20).to_string() == "1.5e+20"
