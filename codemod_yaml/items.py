@@ -98,7 +98,13 @@ class Float(float, Item):
         return cls(value=float(t), original=node, stream=stream, annealed=False)
 
     def to_string(self) -> str:
-        return str(self)
+        t = str(self)
+        if t in ("nan", "inf"):
+            return f".{t}"
+        elif t == "-inf":
+            return f"-.{t[1:]}"
+        else:
+            return t
 
 
 class QuoteStyle(enum.IntEnum):
