@@ -19,8 +19,7 @@ COOKIE_GENERATOR = count(1)
 # These constants need to sort a certain way, and are applied from higher
 # numbers downward.
 CHANGE = 1
-APPEND = 2
-DELETE = 3
+DELETE = 2
 
 
 @dataclass(order=True)
@@ -50,12 +49,11 @@ class ContainerYamlStream(YamlStream):
     def cancel_cookie(self, cookie: int) -> None:
         self._edits.pop(cookie, None)
 
-    def edit(self, item: Item, new_item: Optional[Item], append: bool = False) -> int:
+    def edit(self, item: Item, new_item: Optional[Item]) -> int:
         """
         Changes `item` (read from yaml) to `new_item` (a boxed python object).
 
         If `new_item` is None, it is a deletion.
-        If `append` is True, it is an append.
         Otherwise, it is a swap.
 
         If there have been prior edits recorded in the same span, they are cancelled
@@ -71,12 +69,10 @@ class ContainerYamlStream(YamlStream):
         cookie = next(COOKIE_GENERATOR)
         start = item.start_byte
         end = item.end_byte
-        print("EDIT", cookie, item, start, end, self._original_bytes[start:end])
+        # print("EDIT", cookie, item, start, end, self._original_bytes[start:end])
         if new_item is None:
             self._remove_wholly_contained_edits(start, end)
             self._edits[cookie] = PendingEdit(start, end, DELETE, cookie, None)
-        elif append:
-            self._edits[cookie] = PendingEdit(end, end, APPEND, cookie, new_item)
         else:
             self._remove_wholly_contained_edits(start, end)
             self._edits[cookie] = PendingEdit(start, end, CHANGE, cookie, new_item)
@@ -86,7 +82,7 @@ class ContainerYamlStream(YamlStream):
         # print(self._edits)
         overlapped_cookies: set[int] = set()
         for k, v in self._edits.items():
-            if v.start >= start and v.end <= end and v.start != v.end:
+            if v.start >= start and v.end <= end:
                 overlapped_cookies.add(k)
 
         for k in overlapped_cookies:
@@ -96,7 +92,6 @@ class ContainerYamlStream(YamlStream):
     def text(self) -> bytes:
         tmp = self._original_bytes
 
-        # TODO verify edits are non-overlapping
         for edit in sorted(self._edits.values(), reverse=True):
             if edit.item:
                 new_bytes = edit.item.to_string().encode("utf-8")
@@ -112,7 +107,6 @@ class ContainerYamlStream(YamlStream):
             # TODO restore tree-sitter edits if we can come up with the line/col values
             # self._tree.edit(edit.start, edit.end, edit.start + len(new_bytes), (0, 0), (0, 0))
         logger.debug("New text: %r", tmp)
-        tmp = tmp.lstrip(b"\n")
         # TODO restore this as verification we made valid edits
         # assert parser.parse(tmp, old_tree=self._tree).root_node.text == tmp
         return tmp
