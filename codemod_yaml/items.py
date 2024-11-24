@@ -59,8 +59,6 @@ class Integer(int, Item):
     def from_yaml(cls, node: Node, stream: YamlStream) -> "Integer":
         assert node.text is not None
         t = node.text.decode("utf-8")
-        if t[0] == "0" and t[:2] not in ("0o", "0x") and t != "0":
-            t = "0o" + t[1:]
         return cls(
             value=ast.literal_eval(t), original=node, stream=stream, annealed=False
         )
