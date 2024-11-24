@@ -22,6 +22,10 @@ CHANGE = 1
 DELETE = 2
 
 
+class ParseError(Exception):
+    pass
+
+
 @dataclass(order=True)
 class PendingEdit:
     start: int
@@ -39,6 +43,8 @@ class ContainerYamlStream(YamlStream):
 
     def _get_root(self) -> Item:
         stream = self._tree.root_node
+        if stream.type == "ERROR":
+            raise ParseError()
         for potential_document in stream.children:
             if potential_document.type == "document":
                 return item(node=potential_document.children[0], stream=self)

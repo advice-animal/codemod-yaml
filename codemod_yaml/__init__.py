@@ -5,7 +5,7 @@ except ImportError:  # pragma: no cover
 
 from .base import Item, YamlStream
 from .items import Float, Integer, item, Mapping, Null, QuoteStyle, Sequence, String
-from .parser import parse, parse_str
+from .parser import parse, parse_str, ParseError
 
 __all__ = [
     "Float",
@@ -19,5 +19,6 @@ __all__ = [
     "String",
     "parse",
     "parse_str",
+    "ParseError",
     "YamlStream",
 ]
