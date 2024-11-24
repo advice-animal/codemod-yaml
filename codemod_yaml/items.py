@@ -282,6 +282,9 @@ class Sequence(BlockItem, list[Item]):
         for f in list.__iter__(self):
             yield f.value  # type: ignore[attr-defined]
 
+    def __repr__(self) -> str:
+        return "[%s]" % (", ".join(repr(i) for i in self))
+
     @overload
     def __getitem__(self, index: SupportsIndex, /) -> Item: ...
     @overload
