@@ -8,16 +8,21 @@ cyq foo.0.bar /path/to/file
 which will print `stream["foo"][0]["bar"]` for each file
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Any
+
+from typing import Any, Optional
 
 from codemod_yaml import parse
 
 
-def main() -> None:
-    expr = sys.argv[1]
-    files = sys.argv[2:]
+def main(args: Optional[list[str]] = None) -> int:
+    if args is None:
+        args = sys.argv[1:]
+    expr = args[0]
+    files = args[1:]
 
     exit_code = 0
     for f in files:
@@ -29,7 +34,7 @@ def main() -> None:
             result = repr(e)
         print("  ", expr, "=", result)
 
-    sys.exit(exit_code)
+    return exit_code
 
 
 def eval_expr(filename: str, expression: str) -> Any:
@@ -43,5 +48,5 @@ def eval_expr(filename: str, expression: str) -> Any:
     return obj
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())
