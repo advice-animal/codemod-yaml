@@ -1,13 +1,3 @@
-"""
-Run like:
-
-```
-cyq foo.0.bar /path/to/file
-```
-
-which will print `stream["foo"][0]["bar"]` for each file
-"""
-
 from __future__ import annotations
 
 import sys
@@ -17,10 +7,25 @@ from typing import Any, Optional
 
 from codemod_yaml import parse
 
+USAGE = """
+Run like:
+
+```
+cyq foo.0.bar /path/to/file
+```
+
+which will print `stream["foo"][0]["bar"]` for each file
+"""
+
 
 def main(args: Optional[list[str]] = None) -> int:
     if args is None:
         args = sys.argv[1:]
+
+    if len(args) < 2:
+        print(USAGE)
+        return 1
+
     expr = args[0]
     files = args[1:]
 
