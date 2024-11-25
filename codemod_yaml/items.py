@@ -36,6 +36,56 @@ class Null(Item):
         return other is None or isinstance(other, Null)
 
 
+class Boolean(Item):
+    def __init__(
+        self,
+        value: bool,
+        original: Optional[Node] = None,
+        stream: Optional[YamlStream] = None,
+        annealed: bool = False,
+    ) -> None:
+        super().__init__(original, stream, annealed)
+        self.value = value
+
+    @classmethod
+    def from_yaml(cls, node: Node, stream: YamlStream) -> "Boolean":
+        assert node.text is not None
+        t = node.text.decode("utf-8")
+        return cls(
+            value=ast.literal_eval(t.capitalize()),
+            original=node,
+            stream=stream,
+            annealed=False,
+        )
+
+    def to_string(self) -> str:
+        return str(self).lower()
+
+    def __bool__(self) -> bool:
+        return self.value
+
+    def __nonzero__(self) -> bool:
+        return self.value
+
+    def __int__(self) -> int:
+        return 1 if self else 0
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, bool):
+            return other == self.value
+        elif isinstance(other, int):
+            return other == int(self)
+        elif isinstance(other, Boolean):
+            return other.value == self.value
+        return NotImplemented
+
+    def __repr__(self) -> str:
+        return repr(self.value)
+
+
 class Integer(int, Item):
     def __new__(
         cls,
@@ -775,6 +825,12 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
         elif (
             t.type == "flow_node"
             and t.children[0].type == "plain_scalar"
+            and t.children[0].children[0].type == "boolean_scalar"
+        ):
+            return Boolean.from_yaml(t, stream)
+        elif (
+            t.type == "flow_node"
+            and t.children[0].type == "plain_scalar"
             and t.children[0].children[0].type == "integer_scalar"
         ):
             return Integer.from_yaml(t, stream)
@@ -794,6 +850,8 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
     else:
         if t == None:  # noqa: E711
             return Null()
+        elif isinstance(t, bool):
+            return Boolean(t)
         elif isinstance(t, int):
             return Integer(t)
         elif isinstance(t, float):
