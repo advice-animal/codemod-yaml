@@ -1,5 +1,6 @@
 from codemod_yaml import parse_str
 
+
 def test_flow_ints():
     stream = parse_str("a: [1, 2, 3]\nb: [4, 5,   6]\n")
     assert list(stream["a"]) == [1, 2, 3]
@@ -9,6 +10,7 @@ def test_flow_ints():
     # now upgrade
     stream["b"].append(7)
     assert stream.text == b"b: [4, 5, 6, 7]\n"
+
 
 def test_flow_strings():
     stream = parse_str("a: ['x', \"y\", z]\n")

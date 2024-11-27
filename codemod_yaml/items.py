@@ -650,9 +650,9 @@ class MappingPair(BlockItem):
         # 3 because key, ":", value
         if len(self._original.children) >= 3:
             tmp = self._stream._original_bytes[
-                self._original.children[1]
-                .end_byte : self._original.children[2]
-                .start_byte
+                self._original.children[1].end_byte : self._original.children[
+                    2
+                ].start_byte
             ]
             after_colon = tmp.split(b"\n")[0]
             on_next_line = tmp[:-1].count(b"\n") > 0
@@ -804,7 +804,11 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
             return Mapping(t, original=None, stream=None, annealed=True, multiline=True)
         elif isinstance(t, (list, tuple)):
             return Sequence(
-                t, original=None, stream=None, annealed=True, multiline=True  # type: ignore[arg-type]
+                list(t),
+                original=None,
+                stream=None,
+                annealed=True,
+                multiline=True,
             )
         else:
             raise NotImplementedError(type(t))

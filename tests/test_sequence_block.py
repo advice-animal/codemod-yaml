@@ -1,11 +1,10 @@
-import pytest
-
 from codemod_yaml import parse_str
 from codemod_yaml.items import String, QuoteStyle
 
+
 def test_simple_sequence():
     stream = parse_str("- foo\n- bar\n")
-    
+
     # Simple invariant, we should return the exact same object
     first = stream[0]
     second = stream[0]
@@ -16,12 +15,14 @@ def test_simple_sequence():
     # didn't make any edits, this should be fine
     assert stream.text == b"- foo\n- bar\n"
 
+
 def test_edit_sequence():
     stream = parse_str("- foo\n- bar\n")
     stream.append(String("baz", QuoteStyle.BARE))
     assert stream.text == b"- foo\n- bar\n- baz\n"
     stream.append(String("zab", QuoteStyle.BARE))
     assert stream.text == b"- foo\n- bar\n- baz\n- zab\n"
+
 
 def test_edit_sequence2():
     stream = parse_str("- foo\n- bar\n- baz\n")
@@ -30,12 +31,14 @@ def test_edit_sequence2():
     stream.append(String("zab", QuoteStyle.BARE))
     assert stream.text == b"- foo\n- baz\n- zab\n"
 
+
 def test_int_sequence():
     stream = parse_str("- 1\n- 0xff\n")
     assert stream[0] == 1
     assert stream[1] == 255
     # didn't make any edits, this should be fine
     assert stream.text == b"- 1\n- 0xff\n"
+
 
 def test_string_sequence():
     stream = parse_str("""\
@@ -53,7 +56,8 @@ def test_string_sequence():
     # didn't make any edits, this should be fine
     assert stream.text == b"- a\n- \"b\"\n- 'c'\n- |\n  d\n"
     stream[3] = "x"
-    assert stream.text == b"- a\n- \"b\"\n- 'c'\n- \"x\"\n"
+    assert stream.text == b'- a\n- "b"\n- \'c\'\n- "x"\n'
+
 
 def test_nested_sequence():
     stream = parse_str("""\
@@ -68,16 +72,20 @@ def test_nested_sequence():
     # didn't make any edits, this should be fine
     assert stream.text == b"-\n  -  a\n  -  b\n  -  c\n"
     stream[0][1] = String("new", QuoteStyle.BARE)
-    assert stream.text == b"""\
+    assert (
+        stream.text
+        == b"""\
 -
   -  a
   -  new
   -  c
 """
+    )
     del stream[0][1]
     assert stream.text == b"-\n  -  a\n  -  c\n"
     stream[0].append(String("d", QuoteStyle.BARE))
     assert stream.text == b"-\n  -  a\n  -  c\n  -  d\n"
+
 
 def test_slicing():
     stream = parse_str("""\
@@ -96,17 +104,22 @@ def test_slicing():
     assert stream[0][1::2] == ["b", "d"]
     assert stream[0][1:3:1] == ["b", "c"]
 
+
 def test_slicing_modification():
     stream = parse_str("""\
 -
     -   a
 """)
     stream[0][:] = [String("b", QuoteStyle.BARE), String("c", QuoteStyle.BARE)]
-    assert stream.text == b"""\
+    assert (
+        stream.text
+        == b"""\
 -
     -   b
     -   c
 """
+    )
+
 
 def test_combo_modification():
     stream = parse_str("""\
@@ -119,7 +132,9 @@ b:
     # tree-sitter appears to give the sequence all the trailing newlines UNLESS
     # followed by a map key, in which case nobody gets them.
     stream["a"][:] = [3, 4, 5]
-    assert stream.text == b"""\
+    assert (
+        stream.text
+        == b"""\
 a:
  - 3
  - 4
@@ -127,6 +142,8 @@ a:
 
 b:
 """
+    )
+
 
 def test_cookie_sequence():
     stream = parse_str("""\
@@ -136,6 +153,7 @@ def test_cookie_sequence():
     del stream[1]
     assert stream.text == b"- a\n"
 
+
 def test_nested():
     stream = parse_str("""\
 -
@@ -143,5 +161,4 @@ def test_nested():
  - b
 """)
     stream[0].extend(("c", "d"))
-    assert stream.text == b"-\n - a\n - b\n - \"c\"\n - \"d\"\n"
-    
+    assert stream.text == b'-\n - a\n - b\n - "c"\n - "d"\n'

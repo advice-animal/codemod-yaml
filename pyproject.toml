@@ -1,0 +1,5 @@
+[tool.ruff.lint]
+ignore = [
+    "E711",  # comparison with none
+    "E712",  # comparison with bool
+]
