@@ -187,6 +187,7 @@ class String(str, Item):
 
 class BlockItem(Item):
     _multiline: bool
+    _prepend_newline = False
 
     @property
     def start_byte(self) -> int:
@@ -201,10 +202,14 @@ class BlockItem(Item):
         ]
         p = self._original.start_byte - expected_indent
         assert p == 0 or self._stream._original_bytes[p - 1 : p] == b"\n"
-        assert (
-            leading_whitespace == b" " * expected_indent
-        )  # can't handle same-line block like "- - a" yet
-        return self._original.start_byte - expected_indent
+        if leading_whitespace != b" " * expected_indent:
+            self._prepend_newline = True
+            s = self._original.start_byte
+            while self._stream._original_bytes[s - 1 : s] == b" ":
+                s -= 1
+            return s
+        else:
+            return self._original.start_byte - expected_indent
 
     @property
     def end_byte(self) -> int:
@@ -398,6 +403,8 @@ class Sequence(BlockItem, list[Item]):
 
     def to_string(self) -> str:
         buf = []
+        if self._prepend_newline:
+            buf.append("\n")
         if not self._multiline:
             buf.append("[")
             for item in self:
@@ -479,6 +486,8 @@ class SequenceItem(BlockItem):
 
     def to_string(self) -> str:
         buf = []
+        if self._prepend_newline:
+            buf.append("\n")
         v = self.value.to_string()
         buf.append(" " * self._style.base_indent)
         buf.append("-")
@@ -572,6 +581,8 @@ class Mapping(dict[Item, Item], BlockItem):
 
     def to_string(self) -> str:
         buf = []
+        if self._prepend_newline:
+            buf.append("\n")
         for k, pair in dict.items(self):
             buf.append(pair.to_string())
         if self._multiline and buf[-1][-1:] != "\n":
@@ -640,10 +651,10 @@ class MappingPair(BlockItem):
         assert self._original is not None
         assert self._stream is not None
         expected_indent = self._original.start_point.column
-        leading_whitespace = self._stream._original_bytes[
-            self._original.start_byte - expected_indent : self._original.start_byte
-        ]
-        assert leading_whitespace == b" " * expected_indent, repr(leading_whitespace)
+        # leading_whitespace = self._stream._original_bytes[
+        #     self._original.start_byte - expected_indent : self._original.start_byte
+        # ]
+        # assert leading_whitespace == b" " * expected_indent, repr(leading_whitespace)
         before_colon = self._stream._original_bytes[
             self._original.children[0].end_byte : self._original.children[1].start_byte
         ]
@@ -730,6 +741,8 @@ class MappingPair(BlockItem):
         k = self.key.to_string()
         v = self.value.to_string()
         buf = []
+        if self._prepend_newline:
+            buf.append("\n")
         buf.append(" " * self._style.base_indent)
         buf.append(k)
         buf.append(" " * self._style.mapping_whitespace_before_colon)
