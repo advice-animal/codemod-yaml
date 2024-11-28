@@ -185,3 +185,21 @@ e: f
 g: *anchor
 """
     )
+
+
+def test_other_dict_methods():
+    stream = parse_str("""\
+a: b
+c: d
+e: f
+""")
+    assert stream.pop("a") == "b"
+    stream.setdefault("g", "h")
+    assert (
+        stream.text
+        == b"""\
+c: d
+e: f
+"g": "h"
+"""
+    )
