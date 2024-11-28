@@ -4,12 +4,23 @@ import ast
 import enum
 import re
 
-from typing import Any, Iterable, Iterator, Optional, overload, SupportsIndex, Union
+from typing import (
+    Any,
+    Iterable,
+    Iterator,
+    Optional,
+    overload,
+    SupportsIndex,
+    Union,
+    TypeVar,
+)
 
 from tree_sitter import Node
 
 from .base import Item, YamlStream
 from .style import YamlStyle
+
+T = TypeVar("T")
 
 
 # TODO haven't figured out whether None can be subclassed
@@ -649,7 +660,7 @@ class Mapping(dict[Item, Item], BlockItem):
 
     def __setitem__(self, key: Any, value: Any) -> None:
         key = item(key)
-        pair: Optional[MappingPair] = self.get(key, None)  # type: ignore[assignment]
+        pair: Optional[MappingPair] = dict.get(self, key, None)  # type: ignore[misc]
         if pair is not None and self._stream and not self._annealed:
             pair.anneal()
             pair._value = item(value)
@@ -669,13 +680,44 @@ class Mapping(dict[Item, Item], BlockItem):
 
     def __delitem__(self, key: Any) -> None:
         key = item(key)
-        pair = self.get(key, None)
+        pair = dict.get(self, key, None)
         if pair is not None and self._stream and not self._annealed:
             self._stream.edit(pair, None)
         else:
             self.anneal()
 
         dict.__delitem__(self, key)
+
+    @overload
+    def get(self, key: Item) -> Optional[Item]: ...
+    @overload
+    def get(self, key: Item, default: Union[Item, T]) -> Union[Item, T]: ...
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    @overload
+    def pop(self, key: Item) -> Item: ...
+    @overload
+    def pop(self, key: Item, default: Item) -> Item: ...
+    @overload
+    def pop(self, key: Item, default: T) -> Union[Item, T]: ...
+
+    def pop(self, key: Any, default: Any = None) -> Any:
+        if key in self:
+            rv = self[key]
+            del self[key]
+            return rv
+        else:
+            return default
+
+    def setdefault(self, key: Any, default: Any) -> Any:
+        if key not in self:
+            self[key] = default
+        return self[key]
 
 
 class MappingPair(BlockItem):

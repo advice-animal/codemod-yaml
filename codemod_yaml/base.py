@@ -40,6 +40,21 @@ class YamlStream(abc.ABC):
         assert isinstance(self._root, list)
         self._root.append(other)
 
+    def get(self, other: Any, default: Any = None) -> Any:
+        assert isinstance(self._root, dict)
+        return self._root.get(other, default)
+
+    def pop(self, other: Any, default: Any = None) -> Any:
+        if isinstance(self._root, list):
+            return self._root.pop(other)
+
+        assert isinstance(self._root, dict)
+        return self._root.pop(other, default)
+
+    def setdefault(self, other: Any, value: Any) -> Any:
+        assert isinstance(self._root, dict)
+        return self._root.setdefault(other, value)
+
 
 class Item(abc.ABC):
     """
