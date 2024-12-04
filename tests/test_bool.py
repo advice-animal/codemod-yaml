@@ -1,4 +1,3 @@
-
 from codemod_yaml import parse_str
 from codemod_yaml.items import item, Boolean
 
