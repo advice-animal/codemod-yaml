@@ -297,10 +297,10 @@ class BlockItem(Item):
     def cascade_style(self, style: YamlStyle) -> None:
         assert hasattr(self, "_style")
         self._style = style
-        print("Set", type(self), style.base_indent)
+        # print("Set", type(self), style.base_indent)
         child_style = self.mod_style_for_children()
         for f in self.children():
-            print("  ", type(f))
+            # print("  ", type(f))
             if isinstance(f, BlockItem):
                 f.cascade_style(child_style)
 
