@@ -163,17 +163,22 @@ def test_nested():
     stream[0].extend(("c", "d"))
     assert stream.text == b'-\n - a\n - b\n - "c"\n - "d"\n'
 
+
 def test_same_line_nested():
     stream = parse_str("""\
 - - x
   - y
 """)
     stream[0][0] = "z"
-    assert stream.text == b'''\
+    assert (
+        stream.text
+        == b"""\
 -
   - "z"
   - y
-'''
+"""
+    )
+
 
 def test_same_line_triple_nested():
     stream = parse_str("""\
@@ -182,12 +187,16 @@ def test_same_line_triple_nested():
   - - z
 """)
     stream[0][0][0] = "mmm"
-    assert stream.text == b'''\
+    assert (
+        stream.text
+        == b"""\
 - -
     - "mmm"
     - y
   - - z
-'''
+"""
+    )
+
 
 def test_same_line_triple_nested_change_type():
     stream = parse_str("""\
@@ -196,8 +205,19 @@ def test_same_line_triple_nested_change_type():
   - - z
 """)
     stream[0][0] = "mmm"
-    assert stream.text == b'''\
+    assert (
+        stream.text
+        == b"""\
 -
   - "mmm"
   - - z
-'''
+"""
+    )
+
+
+def test_contains():
+    stream = parse_str("""\
+- abc
+""")
+    assert "abc" in stream
+    assert "def" not in stream

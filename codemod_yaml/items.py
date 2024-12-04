@@ -387,6 +387,12 @@ class Sequence(BlockItem, list[Item]):
     def __repr__(self) -> str:
         return "[%s]" % (", ".join(repr(i) for i in self))
 
+    def __contains__(self, value: Any) -> bool:
+        for x in self:
+            if x == value:
+                return True
+        return False
+
     @overload
     def __getitem__(self, index: SupportsIndex, /) -> Item: ...
     @overload
