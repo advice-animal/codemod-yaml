@@ -17,3 +17,9 @@ def test_flow_strings():
     assert list(stream["a"]) == ["x", "y", "z"]
     del stream["a"][1]
     assert stream.text == b"a: ['x', z]\n"
+
+
+def test_modify_inplace():
+    stream = parse_str("a:\nb:\n [1, 2]\n")
+    stream["b"][0] = "t"
+    assert stream.text == b'a:\nb:\n ["t", 2]\n'
