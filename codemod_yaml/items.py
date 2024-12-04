@@ -546,6 +546,9 @@ class SequenceItem(BlockItem):
         yield self.value
 
     def to_string(self) -> str:
+        if not self._multiline:
+            return self.value.to_string()
+
         buf = []
         if self._prepend_newline:
             buf.append("\n")
@@ -553,7 +556,6 @@ class SequenceItem(BlockItem):
         buf.append(" " * self._style.base_indent)
         buf.append("-")
         if v.count("\n") > 1:
-            # TODO this is only for block
             buf.append("\n")
         else:
             buf.append(" " * self._style.sequence_whitespace_after_dash)
