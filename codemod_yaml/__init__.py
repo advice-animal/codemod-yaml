@@ -15,7 +15,7 @@ from .items import (
     Sequence,
     String,
 )
-from .parser import parse, parse_str, ParseError
+from .parser import parse, parse_file, parse_str, ParseError
 
 __all__ = [
     "Boolean",
@@ -29,6 +29,7 @@ __all__ = [
     "Sequence",
     "String",
     "parse",
+    "parse_file",
     "parse_str",
     "ParseError",
     "YamlStream",

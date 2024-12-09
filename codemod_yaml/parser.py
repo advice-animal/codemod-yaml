@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import count
 from logging import getLogger
-from typing import Optional
+from typing import Optional, IO, Union
+from pathlib import Path
 
 from tree_sitter import Language, Parser, Tree
 from tree_sitter_yaml import language as yaml_language
@@ -116,6 +117,37 @@ class ContainerYamlStream(YamlStream):
         # TODO restore this as verification we made valid edits
         # assert parser.parse(tmp, old_tree=self._tree).root_node.text == tmp
         return tmp
+
+    def save_file(self, dest: Union[IO[bytes], Path, str]) -> None:
+        """
+        Writes the (modified) bytes to the given target, which is either an
+        open file (in bytes mode) or something that can be opened.
+        """
+        if hasattr(dest, "write"):
+            dest.write(b"")  # If this raises it's probably text mode
+            dest.write(self.text)
+        else:
+            with open(dest, "wb") as fo:
+                fo.write(self.text)
+
+    def show_diff(self) -> None:
+        from moreorless.click import echo_color_unified_diff
+
+        echo_color_unified_diff(
+            self._original_bytes.decode("utf-8"),
+            self.text.decode("utf-8"),
+            "file.yml",  # TODO
+        )
+
+
+def parse_file(src: Union[IO[bytes], Path, str]) -> YamlStream:
+    if hasattr(src, "read"):
+        data = src.read()
+        assert isinstance(data, bytes)  # text mode?
+        return parse(data)
+    else:
+        with open(src, "rb") as fo:
+            return parse(fo.read())
 
 
 def parse_str(data: str) -> YamlStream:
