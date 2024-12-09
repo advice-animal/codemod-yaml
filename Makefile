@@ -35,7 +35,7 @@ format:
 .PHONY: lint
 lint:
 	ruff check $(SOURCES)
-	python -m checkdeps --allow-names codemod_yaml codemod_yaml
+	python -m checkdeps --metadata-extras=demo --allow-names=codemod_yaml codemod_yaml
 	mypy --strict --install-types --non-interactive codemod_yaml
 
 .PHONY: release
