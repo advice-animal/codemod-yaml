@@ -18,9 +18,9 @@ def test_simple_sequence():
 
 def test_edit_sequence():
     stream = parse_str("- foo\n- bar\n")
-    stream.append(String("baz", QuoteStyle.BARE))
+    stream.append(String("baz", QuoteStyle.PLAIN))
     assert stream.text == b"- foo\n- bar\n- baz\n"
-    stream.append(String("zab", QuoteStyle.BARE))
+    stream.append(String("zab", QuoteStyle.PLAIN))
     assert stream.text == b"- foo\n- bar\n- baz\n- zab\n"
 
 
@@ -28,7 +28,7 @@ def test_edit_sequence2():
     stream = parse_str("- foo\n- bar\n- baz\n")
     del stream[1]
     assert stream.text == b"- foo\n- baz\n"
-    stream.append(String("zab", QuoteStyle.BARE))
+    stream.append(String("zab", QuoteStyle.PLAIN))
     assert stream.text == b"- foo\n- baz\n- zab\n"
 
 
@@ -71,7 +71,7 @@ def test_nested_sequence():
     assert stream[0][2] == "c"
     # didn't make any edits, this should be fine
     assert stream.text == b"-\n  -  a\n  -  b\n  -  c\n"
-    stream[0][1] = String("new", QuoteStyle.BARE)
+    stream[0][1] = String("new", QuoteStyle.PLAIN)
     assert (
         stream.text
         == b"""\
@@ -83,7 +83,7 @@ def test_nested_sequence():
     )
     del stream[0][1]
     assert stream.text == b"-\n  -  a\n  -  c\n"
-    stream[0].append(String("d", QuoteStyle.BARE))
+    stream[0].append(String("d", QuoteStyle.PLAIN))
     assert stream.text == b"-\n  -  a\n  -  c\n  -  d\n"
 
 
@@ -110,7 +110,7 @@ def test_slicing_modification():
 -
     -   a
 """)
-    stream[0][:] = [String("b", QuoteStyle.BARE), String("c", QuoteStyle.BARE)]
+    stream[0][:] = [String("b", QuoteStyle.PLAIN), String("c", QuoteStyle.PLAIN)]
     assert (
         stream.text
         == b"""\
