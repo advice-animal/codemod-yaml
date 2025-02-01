@@ -175,6 +175,12 @@ class QuoteStyle(enum.IntEnum):
     DOUBLE = 5
     BLOCK = 6
 
+# TODO: Block is only half-implemented today
+QUOTE_HIERARCHY = {
+    QuoteStyle.BARE_PREFERRED: [QuoteStyle.BARE, QuoteStyle.SINGLE, QuoteStyle.DOUBLE],
+    QuoteStyle.SINGLE_PREFERRED: [QuoteStyle.SINGLE, QuoteStyle.DOUBLE],
+    QuoteStyle.DOUBLE_PREFERRED: [QuoteStyle.DOUBLE, QuoteStyle.SINGLE],
+}
 
 BARE_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
@@ -222,28 +228,31 @@ class String(str, Item):
 
     def to_string(self) -> str:
         value = str(self)
-        if self._qs == QuoteStyle.BARE or (
-            self._qs == QuoteStyle.BARE_PREFERRED and BARE_STRING_OK.fullmatch(value)
-        ):
-            if not BARE_STRING_OK.fullmatch(str(self)):
-                raise ValueError(f"Can't use bare string to represent {self!r}")
-            return value
-        elif self._qs == QuoteStyle.DOUBLE or (
-            self._qs == QuoteStyle.DOUBLE_PREFERRED and '"' not in value
-        ):
-            if '"' in value:
-                raise ValueError(f"Can't use double string to represent {self!r}")
-            return f'"{self}"'
-        elif self._qs == QuoteStyle.SINGLE or (
-            self._qs == QuoteStyle.SINGLE_PREFERRED and "'" not in value
-        ):
-            if "'" in value:
-                raise ValueError(f"Can't use single string to represent {self!r}")
-            return f"'{self}'"
-        else:
-            if '"' in value:
-                raise ValueError(f"TODO: Can't automatically quote {self!r} yet")
-            return f'"{self}"'
+        # These are output with zero validation; be careful if you set these
+        # manually (or better yet, use the _PREFERRED quote styles for ones you
+        # construct/modify).
+        possibilities = {
+            QuoteStyle.BARE: value,
+            QuoteStyle.DOUBLE: f'"{value}"',
+            QuoteStyle.SINGLE: f"'{value}'",
+        }
+        if self._qs in possibilities:
+            return possibilities[self._qs]
+
+        # Remove entries that we think are invalid (we'd prefer to be stricter
+        # than necessary here for now).
+        if not BARE_STRING_OK.fullmatch(value):
+            del possibilities[QuoteStyle.BARE]
+        if '"' in value:
+            del possibilities[QuoteStyle.DOUBLE]
+        if "'" in value:
+            del possibilities[QuoteStyle.SINGLE]
+
+        for p in QUOTE_HIERARCHY[self._qs]:
+            if p in possibilities:
+                return possibilities[p]
+
+        raise ValueError(f"Can't find a fallback string for {self!r} using {self._qs!r}")
 
 
 class BlockItem(Item):

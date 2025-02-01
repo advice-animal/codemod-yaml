@@ -24,20 +24,23 @@ def test_all_quote_styles():
 
 def test_all_quote_styles_validation():
     temp = String("'", QuoteStyle.SINGLE)
-    with pytest.raises(ValueError):
-        temp.to_string()
+    assert temp.to_string() == "'''"  # We trust the user :/
+    temp = String("x", QuoteStyle.SINGLE_PREFERRED)
+    assert temp.to_string() == "'x'"
     temp = String("'", QuoteStyle.SINGLE_PREFERRED)
     assert temp.to_string() == '"\'"'
 
     temp = String('"', QuoteStyle.DOUBLE)
-    with pytest.raises(ValueError):
-        temp.to_string()
+    assert temp.to_string() == '"""'  # We trust the user :/
+    temp = String("x", QuoteStyle.DOUBLE_PREFERRED)
+    assert temp.to_string() == '"x"'
     temp = String("'", QuoteStyle.DOUBLE_PREFERRED)
     assert temp.to_string() == '"\'"'
 
     temp = String("-1", QuoteStyle.BARE)
-    with pytest.raises(ValueError):
-        temp.to_string()
+    assert temp.to_string() == '-1'  # We trust the user :/
+    temp = String("-1", QuoteStyle.BARE_PREFERRED)
+    assert temp.to_string() == "'-1'"
 
     # Someday this will work
     temp = String("'\"", QuoteStyle.DOUBLE_PREFERRED)
