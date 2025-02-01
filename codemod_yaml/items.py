@@ -19,6 +19,7 @@ from tree_sitter import Node
 
 from .base import Item, YamlStream
 from .style import YamlStyle
+from .string_repr import safe_plain_repr, safe_dq_repr, safe_sq_repr, unescape_dq
 
 T = TypeVar("T")
 
@@ -167,17 +168,27 @@ class Float(float, Item):
 
 
 class QuoteStyle(enum.IntEnum):
-    BARE_PREFERRED = 0
+    PLAIN_PREFERRED = 0
     SINGLE_PREFERRED = 1
     DOUBLE_PREFERRED = 2
-    BARE = 3
+    PLAIN = 3
     SINGLE = 4
     DOUBLE = 5
     BLOCK = 6
 
 
-# This is not entirely correct, but very expedient to use
-BARE_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
+# TODO: Block is only half-implemented today
+QUOTE_HIERARCHY = {
+    QuoteStyle.PLAIN_PREFERRED: [
+        QuoteStyle.PLAIN,
+        QuoteStyle.SINGLE,
+        QuoteStyle.DOUBLE,
+    ],
+    QuoteStyle.SINGLE_PREFERRED: [QuoteStyle.SINGLE, QuoteStyle.DOUBLE],
+    QuoteStyle.DOUBLE_PREFERRED: [QuoteStyle.DOUBLE, QuoteStyle.SINGLE],
+}
+
+PLAIN_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 class String(str, Item):
@@ -213,38 +224,51 @@ class String(str, Item):
     ) -> "String":
         assert node.text is not None
         text = node.text.decode("utf-8")
-        if quote_style == QuoteStyle.BARE:
+        if quote_style == QuoteStyle.PLAIN:
             value = text
         elif quote_style == QuoteStyle.BLOCK:  # TODO
             value = text[1:].replace("\n", " ").strip()
+        elif quote_style == QuoteStyle.SINGLE:
+            value = text[1:-1].replace("''", "'")
         else:
-            value = ast.literal_eval(text)
-        return cls(value, quote_style, node, stream, False)
+            value = unescape_dq(text)
+        t = cls(value, quote_style, node, stream, False)
+        return t
 
     def to_string(self) -> str:
         value = str(self)
-        if self._qs == QuoteStyle.BARE or (
-            self._qs == QuoteStyle.BARE_PREFERRED and BARE_STRING_OK.fullmatch(value)
-        ):
-            if not BARE_STRING_OK.fullmatch(str(self)):
-                raise ValueError(f"Can't use bare string to represent {self!r}")
-            return value
-        elif self._qs == QuoteStyle.DOUBLE or (
-            self._qs == QuoteStyle.DOUBLE_PREFERRED and '"' not in value
-        ):
-            if '"' in value:
-                raise ValueError(f"Can't use double string to represent {self!r}")
-            return f'"{self}"'
-        elif self._qs == QuoteStyle.SINGLE or (
-            self._qs == QuoteStyle.SINGLE_PREFERRED and "'" not in value
-        ):
-            if "'" in value:
-                raise ValueError(f"Can't use single string to represent {self!r}")
-            return f"'{self}'"
+        # These are output with zero validation; be careful if you set these
+        # manually (or better yet, use the _PREFERRED quote styles for ones you
+        # construct/modify).
+        possibilities = {
+            QuoteStyle.PLAIN: safe_plain_repr(value),
+            QuoteStyle.DOUBLE: safe_dq_repr(value),
+            QuoteStyle.SINGLE: safe_sq_repr(value),
+        }
+        if self._qs in possibilities and possibilities[self._qs] is not None:
+            return possibilities[self._qs]  # type: ignore[return-value]
+
+        # # Remove entries that we think are invalid (we'd prefer to be stricter
+        # # than necessary here for now).
+        # if not PLAIN_STRING_OK.fullmatch(value):
+        #     del possibilities[QuoteStyle.PLAIN]
+        # if '"' in value:
+        #     del possibilities[QuoteStyle.DOUBLE]
+        # if "'" in value or "\\" in value:
+        #     del possibilities[QuoteStyle.SINGLE]
+
+        if self._qs in QUOTE_HIERARCHY:
+            for p in QUOTE_HIERARCHY[self._qs]:
+                if p in possibilities and possibilities[p] is not None:
+                    return possibilities[p]  # type: ignore[return-value]
         else:
-            if '"' in value:
-                raise ValueError(f"TODO: Can't automatically quote {self!r} yet")
-            return f'"{self}"'
+            for v in possibilities.values():
+                if v is not None:
+                    return v
+
+        raise ValueError(
+            f"Can't find a fallback string for {self!r} using {self._qs!r}"
+        )
 
 
 class BlockItem(Item):
@@ -879,7 +903,7 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
             and t.children[0].type == "plain_scalar"
             and t.children[0].children[0].type == "string_scalar"
         ):
-            return String.from_yaml(t, stream, QuoteStyle.BARE)
+            return String.from_yaml(t, stream, QuoteStyle.PLAIN)
         elif t.type == "flow_node" and t.children[0].type == "single_quote_scalar":
             return String.from_yaml(t, stream, QuoteStyle.SINGLE)
         elif t.type == "flow_node" and t.children[0].type == "double_quote_scalar":
