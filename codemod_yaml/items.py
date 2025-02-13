@@ -244,7 +244,7 @@ class String(str, Item):
             QuoteStyle.DOUBLE: safe_dq_repr(value),
             QuoteStyle.SINGLE: safe_sq_repr(value),
         }
-        if self._qs in possibilities:
+        if self._qs in possibilities and possibilities[self._qs] is not None:
             return possibilities[self._qs]
 
         # Remove entries that we think are invalid (we'd prefer to be stricter
@@ -256,10 +256,15 @@ class String(str, Item):
         if "'" in value or "\\" in value:
             del possibilities[QuoteStyle.SINGLE]
 
-        for p in QUOTE_HIERARCHY[self._qs]:
-            if p in possibilities:
-                return possibilities[p]
-
+        if self._qs in QUOTE_HIERARCHY:
+            for p in QUOTE_HIERARCHY[self._qs]:
+                if p in possibilities and possibilities[p] is not None:
+                    return possibilities[p]
+        else:
+            for p in possibilities.values():
+                if p is not None:
+                    return p
+                
         raise ValueError(
             f"Can't find a fallback string for {self!r} using {self._qs!r}"
         )

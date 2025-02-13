@@ -32,7 +32,7 @@ def test_style_automatic_string():
 
 def test_style_bare_string():
     stream = parse_str(COMPLEX_TEXT)
-    stream["style"] = String("hatch", QuoteStyle.BARE)
+    stream["style"] = String("hatch", QuoteStyle.PLAIN)
     output = moreorless.unified_diff(
         COMPLEX_TEXT, stream.text.decode("utf-8"), filename="complex.yaml", n=0
     )

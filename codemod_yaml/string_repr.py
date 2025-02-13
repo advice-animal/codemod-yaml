@@ -18,7 +18,7 @@ NON_STRING_RE = re.compile(
     ^[\[\]] | # seq
     ^`     | # ??
     ^[{}]  | # map
-    ^-     | # seq
+    ^-[ \n]     | # seq
     [\r\n] | # multiline
     ^(?:null|~)\b     | # null
     ^0x[0-9a-fA-F]+\b | # hex
