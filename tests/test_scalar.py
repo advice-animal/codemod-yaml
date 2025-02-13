@@ -21,6 +21,9 @@ def test_all_quote_styles():
     temp = String("foo", QuoteStyle.BARE)
     assert temp.to_string() == "foo"
 
+    temp = String("foo-bar", QuoteStyle.BARE)
+    assert temp.to_string() == "foo-bar"
+
 
 def test_all_quote_styles_validation():
     temp = String("'", QuoteStyle.SINGLE)

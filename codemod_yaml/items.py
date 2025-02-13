@@ -176,7 +176,8 @@ class QuoteStyle(enum.IntEnum):
     BLOCK = 6
 
 
-BARE_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+# This is not entirely correct, but very expedient to use
+BARE_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
 
 
 class String(str, Item):
