@@ -35,13 +35,17 @@ NON_STRING_RE = re.compile(
 
 DQ_ESCAPE_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e\t\r\n-\x1f\"\\\x7f-\xff]")
 SQ_ESCAPE_RE = re.compile(r"'")
-SQ_INVALID_RE = re.compile(r"[\x00-\x1f]")  # including \n
+SQ_INVALID_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")  # including \n
 PLAIN_INVALID_RE = re.compile(r"[\x00-\x1f\'\"~\x7f-\x9f]")
 
 PRETTY_ESCAPES = {
     "\\": "\\",
     '"': '"',
     "t": "\t",
+    "a": "\a",
+    "b": "\b",
+    "f": "\f",
+    "v": "\v",
     "n": "\n",
     "r": "\r",
     "_": "\xa0",
@@ -70,8 +74,8 @@ def _unescape(m: re.Match[str]) -> str:
     elif g[1] in "ux":
         return chr(int(g[2:], 16))
     else:
-        # ??? TODO
-        return g[1:]
+        # \0
+        return chr(int(g[1:]))
 
 
 def _double_up_sq(m: re.Match[str]) -> str:
