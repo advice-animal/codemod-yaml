@@ -166,3 +166,28 @@ def test_test_version_python():
 +    - "3.13"
 """
     )
+
+
+def test_add_key():
+    # This previously would try to anneal test-versions and think it wasn't allowed as a bare key.
+    assert COMPLEX_TEXT.endswith("\n")  # Editing last item gets mangled otherwise
+    stream = parse_str(COMPLEX_TEXT)
+    stream["options"]["foo"] = "bar"
+    output = moreorless.unified_diff(
+        COMPLEX_TEXT, stream.text.decode("utf-8"), filename="complex.yaml", n=0
+    )
+
+    assert (
+        output
+        == """\
+--- a/complex.yaml
++++ b/complex.yaml
+@@ -10,2 +10 @@
+-    nodejs: ["14", "16"]  # comment
+-    # comment2
++    nodejs: ["14", "16"]
+@@ -14,0 +14,2 @@
++  "foo":
++    "bar"
+"""
+    )

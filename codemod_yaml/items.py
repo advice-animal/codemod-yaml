@@ -872,7 +872,9 @@ class MappingPair(BlockItem):
         buf.append(k)
         buf.append(" " * self._style.mapping_whitespace_before_colon)
         buf.append(":")
-        if isinstance(self.value, BlockItem):
+        if isinstance(self.value, BlockItem) and getattr(
+            self.value, "_multiline", True
+        ):
             buf.append("\n")
         elif self._style.mapping_flow_on_next_line:
             buf.append("\n")
