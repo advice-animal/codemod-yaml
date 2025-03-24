@@ -124,7 +124,7 @@ def test_dq_parsing(c):
 
 
 def test_safe_plain_repr():
-    #assert safe_plain_repr("null null") == "null null"
+    # assert safe_plain_repr("null null") == "null null"
     assert safe_plain_repr("null: null") is None
     assert safe_plain_repr("null") is None
     assert safe_plain_repr(",") is None
@@ -133,7 +133,7 @@ def test_safe_plain_repr():
         c = chr(i)
         if c in ("\n", "\x1b", "\x85", "\xa0"):
             continue
-        #if i in (20, 33, 34, 39, 45, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 62, 63, 64, 124, 126):
+        # if i in (20, 33, 34, 39, 45, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 62, 63, 64, 124, 126):
         #    # these can't be escaped, it seems
         yaml_text = dump(c).encode("utf-8")
         y = parser.parse(yaml_text)
