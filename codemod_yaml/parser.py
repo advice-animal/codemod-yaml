@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import count
 from logging import getLogger
-from typing import Optional, IO, Union
+from typing import Optional, IO, Union, Sequence, Iterable
 from pathlib import Path
 
 from tree_sitter import Language, Parser, Tree
@@ -39,19 +39,27 @@ class PendingEdit:
 class ContainerYamlStream(YamlStream):
     def __init__(self, tree: Tree, original_bytes: bytes) -> None:
         super().__init__(tree, original_bytes)
-        self._root: Item = self._get_root()
+        self.documents: Sequence[Item] = tuple(self._find_documents())
+        self._root: Item = self.documents[0]
         self._edits: dict[int, PendingEdit] = {}
 
-    def _get_root(self) -> Item:
+    def _find_documents(self) -> Iterable[Item]:
         stream = self._tree.root_node
         if stream.type == "ERROR":
             raise ParseError()
         for potential_document in stream.children:
             if potential_document.type == "document":
-                return item(node=potential_document.children[0], stream=self)
-        raise NotImplementedError(str(self._tree.root_node))
+                for child in potential_document.children:
+                    if child.type != "---":
+                        yield item(node=child, stream=self)
+                        break  # for child
 
     # Private API for editing
+
+    def reset_edits(self) -> None:
+        self._edits.clear()
+        self.documents = tuple(self._find_documents())
+        self._root = self.documents[0]
 
     def cancel_cookie(self, cookie: int) -> None:
         self._edits.pop(cookie, None)
