@@ -12,8 +12,8 @@ MULTI_DOC_TEXT = MULTI_DOC_PATH.read_text()
 
 def test_value_replacement_doc_0():
     stream = parse_str(MULTI_DOC_TEXT)
-    assert stream[0]["kind"] == "Deployment"
-    stream[0]["kind"] = "CronJob"
+    assert stream.documents[0]["kind"] == "Deployment"
+    stream.documents[0]["kind"] = "CronJob"
     output = moreorless.unified_diff(
         MULTI_DOC_TEXT, stream.text.decode("utf-8"), filename="multi_doc.yaml", n=0
     )
@@ -32,8 +32,8 @@ def test_value_replacement_doc_0():
 
 def test_value_replacement_doc_1():
     stream = parse_str(MULTI_DOC_TEXT)
-    assert stream[1]["metadata"]["name"] == "nginx-state-gatherer"
-    stream[1]["metadata"]["name"] = "apache-state-gatherer"
+    assert stream.documents[1]["metadata"]["name"] == "nginx-state-gatherer"
+    stream.documents[1]["metadata"]["name"] = "apache-state-gatherer"
     output = moreorless.unified_diff(
         MULTI_DOC_TEXT, stream.text.decode("utf-8"), filename="multi_doc.yaml", n=0
     )
