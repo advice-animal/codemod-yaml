@@ -230,3 +230,20 @@ x: "z"
 y:
 """
     )
+
+def test_setdefault_empty_dict():
+    stream = parse_str("""\
+x: y
+""")
+    stream.setdefault("z", {})
+    assert stream.text == b"""\
+x: y
+"z":
+{}
+""" # BUG, missing some indent
+    stream["z"]["z"] = 1
+    assert stream.text == b"""\
+x: y
+"z":
+  "z": 1
+"""

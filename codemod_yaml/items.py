@@ -633,9 +633,7 @@ class Mapping(dict[Item, Item], BlockItem):
         BlockItem.__init__(self, original, stream, annealed)
         self._multiline = multiline
         if not original:
-            if not value:
-                raise NotImplementedError("Empty dict")
-            if not isinstance(list(value.values())[-1], MappingPair):
+            if value and not isinstance(list(value.values())[-1], MappingPair):
                 value = {
                     item(k): MappingPair(
                         item(k), item(v), original=None, stream=None, annealed=True
@@ -644,7 +642,7 @@ class Mapping(dict[Item, Item], BlockItem):
                 }
 
         # Really my childrens' style
-        if self._multiline:
+        if self._multiline and value:
             self._style = list(value.values())[-1]._style  # type: ignore[union-attr]
         else:
             self._style = YamlStyle()  # prevent inference
@@ -709,11 +707,14 @@ class Mapping(dict[Item, Item], BlockItem):
                 buf.append(pair.to_string())
             buf.append("}")
         else:
-            if self._prepend_newline:
-                buf.append("\n")
-            for k, pair in dict.items(self):
-                buf.append(pair.to_string())
-            if self._multiline and buf[-1][-1:] != "\n":
+            if len(self):
+                if self._prepend_newline:
+                    buf.append("\n")
+                for k, pair in dict.items(self):
+                    buf.append(pair.to_string())
+            else:
+                buf.append("{}")
+            if buf[-1][-1:] != "\n":
                 buf.append("\n")
         return "".join(buf)
 
