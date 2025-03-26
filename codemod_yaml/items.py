@@ -910,7 +910,7 @@ class MappingPair(BlockItem):
                 next_line_indent = 2  # leave default
         else:
             # implicit null
-            after_colon = b""
+            after_colon = b" "
             on_next_line = False
             next_line_indent = 2  # leave default
 
