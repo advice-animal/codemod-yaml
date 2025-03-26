@@ -203,3 +203,13 @@ e: f
 "g": "h"
 """
     )
+
+
+def test_unhashable_keys():
+    stream = parse_str("""\
+[1, 2,     3]: x
+{4: 5}: y
+""")
+    assert list(stream._root.keys()) == [[1, 2, 3], "{4: 5}"]
+    assert stream[[1, 2, 3]] == "x"
+    assert stream["{4: 5}"] == "y"
