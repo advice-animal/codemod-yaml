@@ -47,6 +47,9 @@ class Null(Item):
     def __eq__(self, other: object) -> bool:
         return other is None or isinstance(other, Null)
 
+    def __repr__(self) -> str:
+        return "None"
+
 
 class Boolean(Item):
     def __init__(
@@ -596,12 +599,22 @@ class SequenceItem(BlockItem):
         return "".join(buf)
 
 
+def safe_dict_key(x: Item) -> Item:
+    try:
+        hash(x)
+    except TypeError:
+        # TODO surrogate
+        return item(x.to_string())
+    else:
+        return x
+
+
 class Mapping(dict[Item, Item], BlockItem):
     # block_mapping > block_mapping_pair > key/value flow_node/block_node > $value
 
     def __new__(
         cls,
-        value: dict[Item, MappingPair],
+        value: dict[Item, Union[MappingPair, FlowMappingPair]],
         original: Optional[Node],
         stream: Optional[YamlStream],
         annealed: bool,
@@ -611,7 +624,7 @@ class Mapping(dict[Item, Item], BlockItem):
 
     def __init__(
         self,
-        value: dict[Item, MappingPair],
+        value: dict[Item, Union[MappingPair, FlowMappingPair]],
         original: Optional[Node],
         stream: Optional[YamlStream],
         annealed: bool,
@@ -632,7 +645,7 @@ class Mapping(dict[Item, Item], BlockItem):
 
         # Really my childrens' style
         if self._multiline:
-            self._style = list(value.values())[-1]._style
+            self._style = list(value.values())[-1]._style  # type: ignore[union-attr]
         else:
             self._style = YamlStyle()  # prevent inference
 
@@ -648,11 +661,24 @@ class Mapping(dict[Item, Item], BlockItem):
                 if child.type == "block_mapping_pair"
             ]
             return cls(
-                {child.key: child for child in children},
+                {safe_dict_key(child.key): child for child in children},
                 original=node,
                 stream=stream,
                 annealed=False,
                 multiline=True,
+            )
+        elif node.children[0].type == "flow_mapping":
+            flow_children = [
+                FlowMappingPair.from_yaml(node=child, stream=stream)
+                for child in node.children[0].children
+                if child.type in ("flow_pair", "flow_node")
+            ]
+            return cls(
+                {safe_dict_key(child.key): child for child in flow_children},
+                original=node,
+                stream=stream,
+                annealed=False,
+                multiline=False,
             )
         else:
             raise NotImplementedError
@@ -675,12 +701,20 @@ class Mapping(dict[Item, Item], BlockItem):
 
     def to_string(self) -> str:
         buf = []
-        if self._prepend_newline:
-            buf.append("\n")
-        for k, pair in dict.items(self):
-            buf.append(pair.to_string())
-        if self._multiline and buf[-1][-1:] != "\n":
-            buf.append("\n")
+        if not self._multiline:
+            buf.append("{")
+            for k, pair in dict.items(self):
+                if len(buf) > 1:
+                    buf.append(", ")
+                buf.append(pair.to_string())
+            buf.append("}")
+        else:
+            if self._prepend_newline:
+                buf.append("\n")
+            for k, pair in dict.items(self):
+                buf.append(pair.to_string())
+            if self._multiline and buf[-1][-1:] != "\n":
+                buf.append("\n")
         return "".join(buf)
 
     # TODO other dict methods, like setdefault, get, etc
@@ -697,19 +731,30 @@ class Mapping(dict[Item, Item], BlockItem):
         if pair is not None and self._stream and not self._annealed:
             pair.anneal()
             pair._value = item(value)
-            pair.cascade_style(pair._style)
+            if isinstance(pair, MappingPair):
+                pair.cascade_style(pair._style)
             return
         else:
             self.anneal()
-            pair = MappingPair(
-                key,
-                item(value),
-                original=None,
-                stream=self._stream,
-                annealed=True,
-            )
-            pair.cascade_style(self._style)
-            dict.__setitem__(self, key, pair)
+            if self._multiline:
+                pair = MappingPair(
+                    key,
+                    item(value),
+                    original=None,
+                    stream=self._stream,
+                    annealed=True,
+                )
+                pair.cascade_style(self._style)
+                dict.__setitem__(self, key, pair)
+            else:
+                flow_pair = FlowMappingPair(
+                    key,
+                    item(value),
+                    original=None,
+                    stream=self._stream,
+                    annealed=True,
+                )
+                dict.__setitem__(self, key, flow_pair)
 
     def __delitem__(self, key: Any) -> None:
         key = item(key)
@@ -751,6 +796,73 @@ class Mapping(dict[Item, Item], BlockItem):
         if key not in self:
             self[key] = default
         return self[key]
+
+
+class FlowMappingPair(Item):
+    def __init__(
+        self,
+        key: Item,
+        value: Union[Item, Node],
+        original: Optional[Node],
+        stream: Optional[YamlStream],
+        annealed: bool,
+    ):
+        super().__init__(original, stream, annealed)
+        self._key = key
+        self._value = value
+        self._multiline = False
+
+    @classmethod
+    def from_yaml(cls, node: Node, stream: YamlStream) -> "FlowMappingPair":
+        value: Union[Item, Node]
+        if node.type == "flow_node":
+            # valueless
+            key = node
+            value = item(None)
+        else:
+            children = [child for child in node.children if child.type == "flow_node"]
+            if len(children) == 1:
+                key = children[0]
+                value = item(None)
+            else:
+                assert len(children) == 2
+                key, value = children
+        return cls(
+            item(key, stream=stream),
+            value,
+            original=node,
+            stream=stream,
+            annealed=False,
+        )
+
+    @property
+    def key(self) -> Item:
+        return self._key
+
+    @property
+    def value(self) -> Item:
+        if not isinstance(self._value, Item):
+            self._value = item(self._value, self._stream)
+        return self._value
+
+    # TODO decide if initial makes sense here
+    def anneal(self, initial: bool = True) -> None:
+        if self._annealed:
+            return
+
+        if initial and self._stream:
+            self._stream.edit(self, self)
+
+        self.key.anneal(False)
+        self.value.anneal(False)
+
+        self._annealed = True
+
+    def to_string(self) -> str:
+        if self.value == None:
+            return self.key.to_string()
+        else:
+            return f"{self.key.to_string()}: {self.value.to_string()}"
 
 
 class MappingPair(BlockItem):
@@ -898,6 +1010,8 @@ def item(node: Any, stream: Optional[YamlStream] = None) -> Item:
             return Sequence.from_yaml(t, stream)
         elif t.type == "block_node" and t.children[0].type == "block_sequence":
             return Sequence.from_yaml(t, stream)
+        elif t.type == "flow_node" and t.children[0].type == "flow_mapping":
+            return Mapping.from_yaml(t, stream)
         elif t.type == "block_node" and t.children[0].type == "block_mapping":
             return Mapping.from_yaml(t, stream)
         elif (
