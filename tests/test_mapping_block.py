@@ -213,3 +213,20 @@ def test_unhashable_keys():
     assert list(stream._root.keys()) == [[1, 2, 3], "{4: 5}"]
     assert stream[[1, 2, 3]] == "x"
     assert stream["{4: 5}"] == "y"
+
+
+def test_missing_values():
+    stream = parse_str("""\
+x:
+y:
+""")
+    assert stream["x"] == None
+    assert stream["y"] == None
+    stream["x"] = "z"
+    assert (
+        stream.text
+        == b"""\
+x: "z"
+y:
+"""
+    )
