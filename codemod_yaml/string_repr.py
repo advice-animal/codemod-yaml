@@ -28,7 +28,7 @@ NON_STRING_RE = re.compile(
     ^0b[01]+\b        | # bin
     ^0o[0-7]+\b       | # oct (some parsers still accept, we won't output)
     ^(true|false)\b  | # bool
-    ^-?(?:[0-9]+\.)?[0-9]+(?:[eE][0-9]+)?\Z # floats
+    ^-?(?:[0-9]+\.)?[0-9]+(?:[eE][+-]?[0-9]+)?\Z # floats
 """,
     re.X,
 )
