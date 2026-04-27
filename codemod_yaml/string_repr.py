@@ -43,14 +43,20 @@ PLAIN_INVALID_RE = re.compile(r"[\x00-\x1f\'\"~\x7f-\x9f]")
 PRETTY_ESCAPES = {
     "\\": "\\",
     '"': '"',
+    "/": "/",
     "t": "\t",
     "a": "\a",
     "b": "\b",
+    "e": "\x1b",
     "f": "\f",
     "v": "\v",
     "n": "\n",
     "r": "\r",
+    " ": " ",
+    "N": "\x85",
     "_": "\xa0",
+    "L": " ",
+    "P": " ",
 }
 REV_PRETTY_ESCAPES = {v: k for k, v in PRETTY_ESCAPES.items()}
 ESCAPE_RE = re.compile(r"\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[^ux]")
