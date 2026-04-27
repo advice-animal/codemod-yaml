@@ -123,6 +123,19 @@ def test_dq_parsing(c):
         assert item(flow_node, stream=object()) == c
 
 
+def test_unescape_yaml12_escape_sequences():
+    # YAML 1.2 defines escape sequences not in the original PRETTY_ESCAPES dict.
+    # _unescape fell through to chr(int(...)) for unknown escapes, crashing on
+    # non-octal characters like \/ and \e.
+    from codemod_yaml.string_repr import unescape_dq
+    assert unescape_dq(r'"\/"') == "/"
+    assert unescape_dq(r'"\e"') == "\x1b"
+    assert unescape_dq(r'"\ "') == " "
+    assert unescape_dq(r'"\N"') == "\x85"
+    assert unescape_dq(r'"\L"') == " "
+    assert unescape_dq(r'"\P"') == " "
+
+
 def test_safe_plain_repr_float_keywords():
     # YAML float keywords must never be emitted as plain scalars; they round-trip
     # as float infinity or NaN, not as strings.
