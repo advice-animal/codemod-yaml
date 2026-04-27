@@ -123,6 +123,17 @@ def test_dq_parsing(c):
         assert item(flow_node, stream=object()) == c
 
 
+def test_safe_plain_repr_float_exponent_sign():
+    # Scientific notation with an explicit sign must be rejected; YAML parses
+    # them as floats and they would round-trip as numbers, not strings.
+    assert safe_plain_repr("1e+5") is None
+    assert safe_plain_repr("1e-3") is None
+    assert safe_plain_repr("2.5e+10") is None
+    assert safe_plain_repr("9E-1") is None
+    # Unsigned exponents were already caught
+    assert safe_plain_repr("1e5") is None
+
+
 def test_safe_plain_repr_binary_literals():
     # Multi-digit binary literals must be rejected; they round-trip as integers.
     assert safe_plain_repr("0b0") is None
