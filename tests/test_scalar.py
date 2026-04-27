@@ -123,6 +123,14 @@ def test_dq_parsing(c):
         assert item(flow_node, stream=object()) == c
 
 
+def test_safe_plain_repr_float_keywords():
+    # YAML float keywords must never be emitted as plain scalars; they round-trip
+    # as float infinity or NaN, not as strings.
+    for kw in [".inf", ".Inf", ".INF", "+.inf", "+.Inf", "+.INF",
+               "-.inf", "-.Inf", "-.INF", ".nan", ".NaN", ".NAN"]:
+        assert safe_plain_repr(kw) is None, f"{kw!r} should be rejected"
+
+
 def test_safe_plain_repr_float_exponent_sign():
     # Scientific notation with an explicit sign must be rejected; YAML parses
     # them as floats and they would round-trip as numbers, not strings.
