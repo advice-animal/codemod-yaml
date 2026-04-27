@@ -123,6 +123,21 @@ def test_dq_parsing(c):
         assert item(flow_node, stream=object()) == c
 
 
+def test_safe_plain_repr_binary_literals():
+    # Multi-digit binary literals must be rejected; they round-trip as integers.
+    assert safe_plain_repr("0b0") is None
+    assert safe_plain_repr("0b1") is None
+    assert safe_plain_repr("0b10") is None
+    assert safe_plain_repr("0b101") is None
+    assert safe_plain_repr("0b11111111") is None
+    # Same for multi-digit octal
+    assert safe_plain_repr("0o10") is None
+    assert safe_plain_repr("0o777") is None
+    # Plain identifiers that start with 0b/0o but aren't literals are fine
+    assert safe_plain_repr("0b2") is not None  # not a valid binary literal
+    assert safe_plain_repr("0b") is not None   # no digits
+
+
 def test_safe_plain_repr():
     # assert safe_plain_repr("null null") == "null null"
     assert safe_plain_repr("null: null") is None
