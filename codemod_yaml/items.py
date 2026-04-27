@@ -355,12 +355,15 @@ class Sequence(BlockItem, list[Item]):
             ]
         list.__init__(self, value)
         self._multiline = multiline
-        assert isinstance(value[-1], SequenceItem)
         # self._style is really my children's style
-        if self._multiline:
-            self._style = value[-1]._style
+        if value:
+            assert isinstance(value[-1], SequenceItem)
+            if self._multiline:
+                self._style = value[-1]._style
+            else:
+                self._style = YamlStyle()  # prevent inference
         else:
-            self._style = YamlStyle()  # prevent inference
+            self._style = YamlStyle()
 
     @classmethod
     def from_yaml(cls, node: Node, stream: YamlStream) -> "Sequence":
@@ -505,12 +508,16 @@ class Sequence(BlockItem, list[Item]):
             for item in self:
                 buf.append(item.to_string())
                 buf.append(", ")
-            buf.pop()
+            if len(self):
+                buf.pop()
             buf.append("]")
         else:
-            for item in list.__iter__(self):
-                s = item.to_string()
-                buf.append(s)
+            if not len(self):
+                buf.append("[]\n")
+            else:
+                for item in list.__iter__(self):
+                    s = item.to_string()
+                    buf.append(s)
         if self._multiline and buf[-1][-1:] != "\n":
             buf.append("\n")
         return "".join(buf)
