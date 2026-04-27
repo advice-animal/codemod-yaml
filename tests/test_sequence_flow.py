@@ -1,4 +1,26 @@
 from codemod_yaml import parse_str
+from codemod_yaml.items import item, Sequence
+
+
+def test_empty_flow_sequence_parse():
+    # Sequence.__init__ crashed with IndexError on empty value lists.
+    # Sequence.to_string() produced "]" instead of "[]" for empty flow sequences.
+    stream = parse_str("a: []\n")
+    assert list(stream["a"]) == []
+    assert stream.text == b"a: []\n"
+
+
+def test_empty_flow_sequence_item():
+    s = item([])
+    assert isinstance(s, Sequence)
+    assert list(s) == []
+    assert s.to_string() == "[]\n"
+
+
+def test_empty_flow_sequence_append():
+    stream = parse_str("a: []\n")
+    stream["a"].append(1)
+    assert stream.text == b"a: [1]\n"
 
 
 def test_flow_ints():
