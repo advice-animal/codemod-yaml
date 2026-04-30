@@ -404,7 +404,11 @@ class Sequence(BlockItem, list[Item]):
         return hash(tuple(self))
 
     def __eq__(self, other: Any) -> bool:
-        if len(self) != len(other):
+        try:
+            other_len = len(other)
+        except TypeError:
+            return NotImplemented
+        if len(self) != other_len:
             return False
         for a, b in zip(self, other):
             if a != b:
