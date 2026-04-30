@@ -30,7 +30,7 @@ NON_STRING_RE = re.compile(
     ^(true|false)\b  | # bool
     ^[+-]?\.(?:inf|Inf|INF)\b | # float infinity
     ^\.(?:nan|NaN|NAN)\b      | # float NaN
-    ^-?(?:[0-9]+\.)?[0-9]+(?:[eE][+-]?[0-9]+)?\Z # floats
+    ^[+-]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][+-]?[0-9]+)?\Z # floats
 """,
     re.X,
 )

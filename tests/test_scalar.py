@@ -155,6 +155,18 @@ def test_safe_plain_repr_float_exponent_sign():
     assert safe_plain_repr("1e5") is None
 
 
+def test_safe_plain_repr_leading_dot_floats():
+    # Floats with a leading decimal point are valid YAML and must be rejected.
+    assert safe_plain_repr(".5") is None
+    assert safe_plain_repr("-.5") is None
+    assert safe_plain_repr("+.5") is None
+    # Floats with a trailing decimal point (no fractional digits) must also be rejected.
+    assert safe_plain_repr("1.") is None
+    # Positive-signed floats must be rejected.
+    assert safe_plain_repr("+1.5") is None
+    assert safe_plain_repr("+1e5") is None
+
+
 def test_safe_plain_repr_binary_literals():
     # Multi-digit binary literals must be rejected; they round-trip as integers.
     assert safe_plain_repr("0b0") is None
