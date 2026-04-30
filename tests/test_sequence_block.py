@@ -221,3 +221,12 @@ def test_contains():
 """)
     assert "abc" in stream
     assert "def" not in stream
+
+
+def test_eq_non_sequence():
+    stream = parse_str("- 1\n- 2\n")
+    # Comparing a Sequence to a non-sequence type should return False (via
+    # NotImplemented), not raise TypeError.
+    assert (stream._root == 42) == False
+    assert (stream._root == "hello") == False
+    assert (stream._root == None) == False
