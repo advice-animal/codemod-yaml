@@ -796,11 +796,15 @@ class Mapping(dict[Item, Item], BlockItem):
     @overload
     def pop(self, key: Item, default: T) -> Union[Item, T]: ...
 
-    def pop(self, key: Any, default: Any = None) -> Any:
+    _MISSING: Any = object()
+
+    def pop(self, key: Any, default: Any = _MISSING) -> Any:
         if key in self:
             rv = self[key]
             del self[key]
             return rv
+        elif default is Mapping._MISSING:
+            raise KeyError(key)
         else:
             return default
 

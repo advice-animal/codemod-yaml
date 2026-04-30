@@ -205,6 +205,16 @@ e: f
     )
 
 
+def test_pop_missing_key_raises():
+    import pytest
+    stream = parse_str("a: 1\nb: 2\n")
+    assert stream.pop("a") == 1
+    with pytest.raises(KeyError):
+        stream._root.pop("missing")
+    # With an explicit default, missing key returns the default instead.
+    assert stream._root.pop("missing", "fallback") == "fallback"
+
+
 def test_unhashable_keys():
     stream = parse_str("""\
 [1, 2,     3]: x
