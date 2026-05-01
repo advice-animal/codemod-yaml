@@ -151,6 +151,18 @@ def test_safe_plain_repr_empty_string():
     assert safe_plain_repr("") is None
 
 
+def test_safe_plain_repr_space_hash():
+    # A space followed by '#' inside a plain scalar is a comment indicator in
+    # YAML: everything from the '#' to end-of-line is stripped.  The scalar
+    # must be quoted so the '#' is not consumed as a comment.
+    assert safe_plain_repr("foo #bar") is None
+    assert safe_plain_repr("x #") is None
+    assert safe_plain_repr("value # comment") is None
+    # Hash without preceding space is fine in plain scalars.
+    assert safe_plain_repr("foo#bar") == "foo#bar"
+    assert safe_plain_repr("#leading") is None  # already caught by ^\#
+
+
 def test_safe_plain_repr_float_keywords():
     # YAML float keywords must never be emitted as plain scalars; they round-trip
     # as float infinity or NaN, not as strings.
