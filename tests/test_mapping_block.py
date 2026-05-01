@@ -263,14 +263,24 @@ def test_setdefault_empty_dict():
 x: y
 """)
     stream.setdefault("z", {})
-    assert stream.text == b"""\
-x: y
-"z":
-{}
-""" # BUG, missing some indent
+    # Empty block containers render inline; block style kicks in once items exist.
+    assert stream.text == b'x: y\n"z": {}\n'
     stream["z"]["z"] = 1
     assert stream.text == b"""\
 x: y
 "z":
   "z": 1
+"""
+
+
+def test_setdefault_chain():
+    stream = parse_str("x: y\n")
+    stream.setdefault("a", {})
+    stream["a"].setdefault("b", {})
+    stream["a"]["b"]["val"] = 1
+    assert stream.text == b"""\
+x: y
+"a":
+  "b":
+    "val": 1
 """

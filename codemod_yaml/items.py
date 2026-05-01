@@ -1010,7 +1010,7 @@ class MappingPair(BlockItem):
         buf.append(":")
         if isinstance(self.value, BlockItem) and getattr(
             self.value, "_multiline", True
-        ):
+        ) and len(self.value):
             buf.append("\n")
         elif self._style.mapping_flow_on_next_line:
             buf.append("\n")
