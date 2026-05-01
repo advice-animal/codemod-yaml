@@ -101,6 +101,8 @@ def safe_plain_repr(x: str, validate: bool = True) -> Optional[str]:
 
     Returns None if it would be confused with some other type.
     """
+    if not x:
+        return None
     if validate:
         if NON_STRING_RE.search(x):
             return None
