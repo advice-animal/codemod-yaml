@@ -29,3 +29,18 @@ def test_special_cases():
     assert item(float("nan")).to_string() == ".nan"
     assert item(float("inf")).to_string() == ".inf"
     assert item(float("-inf")).to_string() == "-.inf"
+
+
+def test_mixed_case_inf_nan():
+    # tree-sitter-yaml (following YAML 1.1) accepts .Inf, .INF, .NaN, .NAN.
+    # Float.from_yaml used a case-sensitive endswith check so these variants
+    # were not stripped of the dot before calling float(), raising ValueError.
+    import math
+    for s in [".Inf", ".INF", "+.INF", "-.INF", ".NaN", ".NAN"]:
+        root = parse_str(s)._root
+        if "nan" in s.lower():
+            assert math.isnan(root)
+        elif "-" in s:
+            assert root == float("-inf")
+        else:
+            assert root == float("inf")
