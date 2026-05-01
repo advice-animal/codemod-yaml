@@ -773,11 +773,12 @@ class Mapping(dict[Item, Item], BlockItem):
     def __delitem__(self, key: Any) -> None:
         key = item(key)
         pair = dict.get(self, key, None)
-        if pair is not None and self._stream and not self._annealed:
+        if pair is None:
+            raise KeyError(key)
+        if self._stream and not self._annealed:
             self._stream.edit(pair, None)
         else:
             self.anneal()
-
         dict.__delitem__(self, key)
 
     @overload

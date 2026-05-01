@@ -205,6 +205,18 @@ e: f
     )
 
 
+def test_delitem_missing_key_no_state_corruption():
+    import pytest
+    stream = parse_str("a: 1\nb: 2\n")
+    with pytest.raises(KeyError):
+        del stream._root["missing"]
+    # The mapping must NOT have been annealed as a side-effect of the failed delete.
+    assert not stream._root._annealed
+    # Subsequent targeted edits should still work (not fall back to full rewrite).
+    stream["a"] = 99
+    assert stream.text == b"a: 99\nb: 2\n"
+
+
 def test_pop_missing_key_raises():
     import pytest
     stream = parse_str("a: 1\nb: 2\n")
