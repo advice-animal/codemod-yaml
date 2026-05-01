@@ -173,6 +173,20 @@ def test_safe_plain_repr_colon_at_end():
     assert safe_plain_repr("http://example.com") == "http://example.com"
 
 
+def test_safe_plain_repr_case_insensitive_keywords():
+    # tree-sitter-yaml (following YAML 1.1) recognises case variants of null
+    # and bool keywords.  Plain scalars matching these must be rejected so they
+    # don't round-trip as None/True/False instead of as strings.
+    for kw in ["NULL", "Null"]:
+        assert safe_plain_repr(kw) is None, f"{kw!r} should be rejected (null)"
+    for kw in ["True", "False", "TRUE", "FALSE"]:
+        assert safe_plain_repr(kw) is None, f"{kw!r} should be rejected (bool)"
+    # Lower-case forms were already caught; check they still are.
+    assert safe_plain_repr("null") is None
+    assert safe_plain_repr("true") is None
+    assert safe_plain_repr("false") is None
+
+
 def test_safe_plain_repr_float_keywords():
     # YAML float keywords must never be emitted as plain scalars; they round-trip
     # as float infinity or NaN, not as strings.
