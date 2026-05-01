@@ -136,6 +136,15 @@ def test_unescape_yaml12_escape_sequences():
     assert unescape_dq(r'"\P"') == " "
 
 
+def test_unescape_8digit_unicode():
+    # YAML 1.2 defines \Uxxxxxxxx for code points above U+FFFF.  ESCAPE_RE was
+    # matching \U as the catch-all \\[^ux] alternative (2 chars), causing
+    # _unescape to call chr(int("U...")) which raised ValueError.
+    from codemod_yaml.string_repr import unescape_dq
+    assert unescape_dq(r'"\U0001F600"') == "\U0001F600"  # emoji
+    assert unescape_dq(r'"\U00000041"') == "A"
+
+
 def test_safe_plain_repr_float_keywords():
     # YAML float keywords must never be emitted as plain scalars; they round-trip
     # as float infinity or NaN, not as strings.

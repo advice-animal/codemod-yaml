@@ -59,7 +59,7 @@ PRETTY_ESCAPES = {
     "P": " ",
 }
 REV_PRETTY_ESCAPES = {v: k for k, v in PRETTY_ESCAPES.items()}
-ESCAPE_RE = re.compile(r"\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[^ux]")
+ESCAPE_RE = re.compile(r"\\U[0-9a-fA-F]{8}|\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[^uUx]")
 
 
 def _add_backslash(m: re.Match[str]) -> str:
@@ -79,7 +79,7 @@ def _unescape(m: re.Match[str]) -> str:
     g = m.group(0)
     if g[1] in PRETTY_ESCAPES:
         return PRETTY_ESCAPES[g[1]]
-    elif g[1] in "ux":
+    elif g[1] in "uUx":
         return chr(int(g[2:], 16))
     else:
         # \0
