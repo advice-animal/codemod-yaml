@@ -10,6 +10,7 @@ NON_STRING_RE = re.compile(
     ^\?    | # explicit key
     ^:     | # explicit value
     :[ ]   | # colon-space looks like a map key
+    [ ]\#  | # space+hash starts a comment, truncating the scalar
     ^,     | # separator
     ^!     | # tag
     ^\#    | # comment
