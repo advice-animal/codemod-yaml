@@ -25,11 +25,11 @@ NON_STRING_RE = re.compile(
     ^[{}]  | # map
     ^-(?:[ \n]|\Z)    | # seq
     [\r\n] | # multiline
-    ^(?:null|~)\b     | # null
+    ^(?:null|Null|NULL|~)\b | # null (tree-sitter accepts all three cases)
     ^0x[0-9a-fA-F]+\b | # hex
     ^0b[01]+\b        | # bin
     ^0o[0-7]+\b       | # oct (some parsers still accept, we won't output)
-    ^(true|false)\b  | # bool
+    ^(?:true|false|True|False|TRUE|FALSE)\b | # bool (case variants)
     ^[+-]?\.(?:inf|Inf|INF)\b | # float infinity
     ^\.(?:nan|NaN|NAN)\b      | # float NaN
     ^[+-]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][+-]?[0-9]+)?\Z # floats
