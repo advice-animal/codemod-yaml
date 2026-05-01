@@ -155,8 +155,9 @@ class Float(float, Item):
     def from_yaml(cls, node: Node, stream: YamlStream) -> Float:
         assert node.text is not None
         t = node.text.decode("utf-8")
-        # Special cases: [+-].inf .nan (case sensitive)
-        if t.endswith("inf") or t.endswith("nan"):
+        # Special cases: [+-].inf .nan (all case variants per YAML 1.1/1.2)
+        t_lower = t.lower()
+        if t_lower.endswith(".inf") or t_lower.endswith(".nan"):
             t = t.replace(".", "")
         return cls(value=float(t), original=node, stream=stream, annealed=False)
 
