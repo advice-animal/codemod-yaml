@@ -223,6 +223,20 @@ def test_contains():
     assert "def" not in stream
 
 
+def test_setitem_after_anneal_no_corrupt():
+    # After anneal (via del/append), __setitem__ must NOT register a second
+    # conflicting CHANGE edit for the same byte range as the sequence.
+    stream = parse_str("- a\n- b\n- c\n")
+    del stream[1]
+    stream[0] = "x"
+    assert stream.text == b'- "x"\n- c\n'
+
+    stream2 = parse_str("- a\n- b\n- c\n")
+    stream2.append("d")
+    stream2[0] = "new"
+    assert stream2.text == b'- "new"\n- b\n- c\n- "d"\n'
+
+
 def test_eq_non_sequence():
     stream = parse_str("- 1\n- 2\n")
     # Comparing a Sequence to a non-sequence type should return False (via

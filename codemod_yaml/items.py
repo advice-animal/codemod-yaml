@@ -496,10 +496,9 @@ class Sequence(BlockItem, list[Item]):
         if initial and self._stream:
             self._stream.edit(self, self)
 
-        # Apply recursively to all children.
-        for x in self:
-            if hasattr(x, "anneal"):
-                x.anneal(initial=False)
+        # Apply recursively to all children (SequenceItem wrappers, not values).
+        for x in list.__iter__(self):
+            x.anneal(initial=False)
 
         self._annealed = True
 
