@@ -26,6 +26,25 @@ def test_all_explicit_quote_styles():
     assert temp.to_string() == "foo"
 
 
+def test_sq_multiline_folding():
+    # Single-quoted YAML scalars that span multiple lines must have YAML
+    # flow-scalar line-folding applied: a single line break folds to a space;
+    # N consecutive line breaks fold to N-1 newlines.
+    from codemod_yaml import parse_str
+    from codemod_yaml.string_repr import unescape_sq
+
+    # pyyaml serialises '\n' as "- '\n\n  '\n" (two newlines → one after folding)
+    assert parse_str("- '\n\n  '\n")[0] == '\n'
+    # pyyaml serialises 'a\nb' as "- 'a\n\n  b'\n"
+    assert parse_str("- 'a\n\n  b'\n")[0] == 'a\nb'
+    # Single line-break folds to a space
+    assert unescape_sq("'hello\n  world'") == 'hello world'
+    # Trailing whitespace before the break is also stripped
+    assert unescape_sq("'a  \n  b'") == 'a b'
+    # Quote-doubling still works after folding
+    assert unescape_sq("'it''''s'") == "it''s"
+
+
 def test_all_quote_styles_validation():
     temp = String("'", QuoteStyle.SINGLE)
     assert temp.to_string() == "''''"

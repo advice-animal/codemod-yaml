@@ -128,3 +128,20 @@ def safe_sq_repr(x: str) -> Optional[str]:
     if SQ_INVALID_RE.search(x):
         return None
     return "'" + SQ_ESCAPE_RE.sub(_double_up_sq, x) + "'"
+
+
+# Matches a run of whitespace that contains at least one newline — the unit
+# that YAML flow-scalar line-folding collapses.
+_SQ_FOLD_RE = re.compile(r"[ \t]*(?:\n[ \t]*)+")
+
+
+def _fold_newline(m: re.Match[str]) -> str:
+    n = m.group(0).count("\n")
+    return " " if n == 1 else "\n" * (n - 1)
+
+
+def unescape_sq(x: str) -> str:
+    """Decode a raw single-quoted YAML scalar (including the surrounding quotes)."""
+    raw = x[1:-1]
+    # Apply flow-scalar line folding before un-doubling quotes.
+    return _SQ_FOLD_RE.sub(_fold_newline, raw).replace("''", "'")
