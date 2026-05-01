@@ -35,8 +35,8 @@ class Null(Item):
         super().__init__(original, stream, annealed)
 
     @classmethod
-    def from_yaml(self, node: Node, stream: YamlStream) -> "Null":
-        return self(original=node, stream=stream, annealed=False)
+    def from_yaml(cls, node: Node, stream: YamlStream) -> "Null":
+        return cls(original=node, stream=stream, annealed=False)
 
     def to_string(self) -> str:
         return "~"
@@ -196,7 +196,6 @@ PLAIN_STRING_OK = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 class String(str, Item):
-    # TODO qs=quoting style somehow
     # TODO decide if the original/stream/annealed default should go in item() instead
     def __new__(
         cls,
