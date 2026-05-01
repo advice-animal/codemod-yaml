@@ -48,11 +48,15 @@ class YamlStream(abc.ABC):
         assert isinstance(self._root, dict)
         return self._root.get(other, default)
 
-    def pop(self, other: Any, default: Any = None) -> Any:
+    _MISSING: Any = object()
+
+    def pop(self, other: Any, default: Any = _MISSING) -> Any:
         if isinstance(self._root, list):
             return self._root.pop(other)
 
         assert isinstance(self._root, dict)
+        if default is YamlStream._MISSING:
+            return self._root.pop(other)
         return self._root.pop(other, default)
 
     def setdefault(self, other: Any, value: Any) -> Any:
