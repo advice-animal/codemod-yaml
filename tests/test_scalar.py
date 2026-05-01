@@ -163,6 +163,16 @@ def test_safe_plain_repr_space_hash():
     assert safe_plain_repr("#leading") is None  # already caught by ^\#
 
 
+def test_safe_plain_repr_colon_at_end():
+    # A trailing colon is parsed as a mapping-value indicator by YAML; both
+    # pyyaml and tree-sitter raise errors when 'key: foo:\n' is parsed.
+    assert safe_plain_repr("foo:") is None
+    assert safe_plain_repr("key:") is None
+    # Colon in the middle (not followed by space/end) is fine.
+    assert safe_plain_repr("foo:bar") == "foo:bar"
+    assert safe_plain_repr("http://example.com") == "http://example.com"
+
+
 def test_safe_plain_repr_float_keywords():
     # YAML float keywords must never be emitted as plain scalars; they round-trip
     # as float infinity or NaN, not as strings.
