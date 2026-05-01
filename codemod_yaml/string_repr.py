@@ -142,13 +142,17 @@ def safe_sq_repr(x: str) -> Optional[str]:
     return "'" + SQ_ESCAPE_RE.sub(_double_up_sq, x) + "'"
 
 
-# Matches a run of whitespace that contains at least one newline — the unit
+# Line-break characters recognised by pyyaml (YAML 1.1 compatible):
+# LF, CR, NEL (U+0085), LS (U+2028), PS (U+2029).
+_YAML_LB = "\n\r\x85  "
+
+# Matches a run of whitespace that contains at least one line-break — the unit
 # that YAML flow-scalar line-folding collapses.
-_SQ_FOLD_RE = re.compile(r"[ \t]*(?:\n[ \t]*)+")
+_SQ_FOLD_RE = re.compile(r"[ \t]*(?:[" + _YAML_LB + r"][ \t]*)+")
 
 
 def _fold_newline(m: re.Match[str]) -> str:
-    n = m.group(0).count("\n")
+    n = sum(1 for c in m.group(0) if c in _YAML_LB)
     return " " if n == 1 else "\n" * (n - 1)
 
 
