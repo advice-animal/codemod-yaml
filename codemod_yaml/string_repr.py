@@ -161,3 +161,8 @@ def unescape_sq(x: str) -> str:
     raw = x[1:-1]
     # Apply flow-scalar line folding before un-doubling quotes.
     return _SQ_FOLD_RE.sub(_fold_newline, raw).replace("''", "'")
+
+
+def fold_plain(x: str) -> str:
+    """Apply YAML flow line folding to a plain scalar that may span multiple lines."""
+    return _SQ_FOLD_RE.sub(_fold_newline, x)
