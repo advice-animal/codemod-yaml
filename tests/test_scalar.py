@@ -145,6 +145,12 @@ def test_unescape_8digit_unicode():
     assert unescape_dq(r'"\U00000041"') == "A"
 
 
+def test_safe_plain_repr_empty_string():
+    # An empty plain scalar is parsed as null in YAML 1.2; the empty string
+    # must never be emitted as a plain scalar.
+    assert safe_plain_repr("") is None
+
+
 def test_safe_plain_repr_float_keywords():
     # YAML float keywords must never be emitted as plain scalars; they round-trip
     # as float infinity or NaN, not as strings.
