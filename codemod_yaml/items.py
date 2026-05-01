@@ -19,7 +19,7 @@ from tree_sitter import Node
 
 from .base import Item, YamlStream
 from .style import YamlStyle
-from .string_repr import safe_plain_repr, safe_dq_repr, safe_sq_repr, unescape_dq
+from .string_repr import safe_plain_repr, safe_dq_repr, safe_sq_repr, unescape_dq, unescape_sq
 
 T = TypeVar("T")
 
@@ -232,7 +232,7 @@ class String(str, Item):
         elif quote_style == QuoteStyle.BLOCK:  # TODO
             value = text[1:].replace("\n", " ").strip()
         elif quote_style == QuoteStyle.SINGLE:
-            value = text[1:-1].replace("''", "'")
+            value = unescape_sq(text)
         else:
             value = unescape_dq(text)
         t = cls(value, quote_style, node, stream, False)
