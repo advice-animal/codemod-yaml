@@ -221,10 +221,15 @@ def test_pop_missing_key_raises():
     import pytest
     stream = parse_str("a: 1\nb: 2\n")
     assert stream.pop("a") == 1
+    # Mapping.pop without default must raise KeyError.
     with pytest.raises(KeyError):
         stream._root.pop("missing")
+    # YamlStream.pop without default must also raise KeyError (not return None).
+    with pytest.raises(KeyError):
+        stream.pop("missing")
     # With an explicit default, missing key returns the default instead.
     assert stream._root.pop("missing", "fallback") == "fallback"
+    assert stream.pop("missing", "fallback") == "fallback"
 
 
 def test_unhashable_keys():
