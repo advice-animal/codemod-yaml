@@ -13,13 +13,13 @@ NON_STRING_RE = re.compile(
     ^,     | # separator
     ^!     | # tag
     ^\#    | # comment
-    ^&     | # ??
-    ^\*    | # ??
-    ^%     | # ??
-    ^[|>]  | # str
-    ^@     | # ??
-    ^[\[\]] | # seq
-    ^`     | # ??
+    ^&     | # anchor
+    ^\*    | # alias
+    ^%     | # directive
+    ^[|>]  | # block scalar
+    ^@     | # reserved
+    ^[\[\]] | # flow sequence
+    ^`     | # reserved
     ^[{}]  | # map
     ^-(?:[ \n]|\Z)    | # seq
     [\r\n] | # multiline

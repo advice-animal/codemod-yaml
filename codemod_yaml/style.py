@@ -4,10 +4,10 @@ from dataclasses import dataclass, replace
 @dataclass
 class YamlStyle:
     """
-    Stores stylistic preferences about how sequences get formatted.
+    Stores stylistic preferences about how block sequences and mappings get formatted.
 
-    These are really only intended to be set as global defaults or set on a
-    single sequence item to match its preceeding one.
+    These are really only intended to be set as global defaults or inferred
+    from the surrounding document and cascaded down to children.
     """
 
     #: the number of (presumably whitespace) characters to indent this item
@@ -33,9 +33,9 @@ class YamlStyle:
     sequence_flow_on_next_line: bool = False
 
     def __post_init__(self) -> None:
-        """
-        Although it's possible to add additional indent, we'll only output lined-up ourselves for consistency.
-        """
+        # sequence_whitespace_indent is derived, not independently configurable:
+        # it must be one more than whitespace_after_dash so the content lines up
+        # with the first character of the value (after "- ").
         self.sequence_whitespace_indent = self.sequence_whitespace_after_dash + 1
 
     #: key<>:<>value <-- before/after colon`
