@@ -19,7 +19,7 @@ from tree_sitter import Node
 
 from .base import Item, YamlStream
 from .style import YamlStyle
-from .string_repr import safe_plain_repr, safe_dq_repr, safe_sq_repr, unescape_dq, unescape_sq
+from .string_repr import safe_plain_repr, safe_dq_repr, safe_sq_repr, unescape_dq, unescape_sq, fold_plain
 
 T = TypeVar("T")
 
@@ -228,7 +228,7 @@ class String(str, Item):
         assert node.text is not None
         text = node.text.decode("utf-8")
         if quote_style == QuoteStyle.PLAIN:
-            value = text
+            value = fold_plain(text)
         elif quote_style == QuoteStyle.BLOCK:  # TODO
             value = text[1:].replace("\n", " ").strip()
         elif quote_style == QuoteStyle.SINGLE:
