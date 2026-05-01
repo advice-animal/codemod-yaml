@@ -791,14 +791,14 @@ class Mapping(dict[Item, Item], BlockItem):
         except KeyError:
             return default
 
+    _MISSING: Any = object()
+
     @overload
     def pop(self, key: Item) -> Item: ...
     @overload
     def pop(self, key: Item, default: Item) -> Item: ...
     @overload
     def pop(self, key: Item, default: T) -> Union[Item, T]: ...
-
-    _MISSING: Any = object()
 
     def pop(self, key: Any, default: Any = _MISSING) -> Any:
         if key in self:
@@ -1009,7 +1009,7 @@ class MappingPair(BlockItem):
         buf.append(":")
         if isinstance(self.value, BlockItem) and getattr(
             self.value, "_multiline", True
-        ) and len(self.value):
+        ) and next(self.value.children(), None) is not None:
             buf.append("\n")
         elif self._style.mapping_flow_on_next_line:
             buf.append("\n")
