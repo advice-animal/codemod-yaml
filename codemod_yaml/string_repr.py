@@ -61,7 +61,15 @@ PRETTY_ESCAPES = {
     "P": " ",
 }
 REV_PRETTY_ESCAPES = {v: k for k, v in PRETTY_ESCAPES.items()}
-ESCAPE_RE = re.compile(r"\\U[0-9a-fA-F]{8}|\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}|\\[^uUx]")
+# \\[\n\r][ \t]* must come before \\[^uUx] so the line-continuation case
+# (backslash + actual newline) is absorbed together with its trailing indent.
+ESCAPE_RE = re.compile(
+    r"\\U[0-9a-fA-F]{8}"
+    r"|\\u[0-9a-fA-F]{4}"
+    r"|\\x[0-9a-fA-F]{2}"
+    r"|\\[\n\r][ \t]*"
+    r"|\\[^uUx]"
+)
 
 
 def _add_backslash(m: re.Match[str]) -> str:
@@ -83,6 +91,10 @@ def _unescape(m: re.Match[str]) -> str:
         return PRETTY_ESCAPES[g[1]]
     elif g[1] in "uUx":
         return chr(int(g[2:], 16))
+    elif g[1] in "\n\r":
+        # \<newline> is a line-continuation: the backslash, the newline, and any
+        # leading whitespace on the next line are all discarded.
+        return ""
     else:
         # \0
         return chr(int(g[1:]))
