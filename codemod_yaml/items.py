@@ -745,6 +745,8 @@ class Mapping(dict[Item, Item], BlockItem):
             pair._value = item(value)
             if isinstance(pair, MappingPair):
                 pair.cascade_style(pair._style)
+            elif isinstance(pair, FlowMappingPair):
+                pair._valueless = False
             return
         else:
             self.anneal()
@@ -822,24 +824,28 @@ class FlowMappingPair(Item):
         original: Optional[Node],
         stream: Optional[YamlStream],
         annealed: bool,
+        valueless: bool = False,
     ):
         super().__init__(original, stream, annealed)
         self._key = key
         self._value = value
         self._multiline = False
+        self._valueless = valueless
 
     @classmethod
     def from_yaml(cls, node: Node, stream: YamlStream) -> "FlowMappingPair":
         value: Union[Item, Node]
+        valueless = False
         if node.type == "flow_node":
-            # valueless
             key = node
             value = item(None)
+            valueless = True
         else:
             children = [child for child in node.children if child.type == "flow_node"]
             if len(children) == 1:
                 key = children[0]
                 value = item(None)
+                valueless = True
             else:
                 assert len(children) == 2
                 key, value = children
@@ -849,6 +855,7 @@ class FlowMappingPair(Item):
             original=node,
             stream=stream,
             annealed=False,
+            valueless=valueless,
         )
 
     @property
@@ -875,7 +882,7 @@ class FlowMappingPair(Item):
         self._annealed = True
 
     def to_string(self) -> str:
-        if self.value == None:
+        if self._valueless:
             return self.key.to_string()
         else:
             return f"{self.key.to_string()}: {self.value.to_string()}"
