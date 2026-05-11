@@ -25,7 +25,8 @@ setup:
 
 .PHONY: test
 test:
-	pytest --cov=codemod_yaml
+	coverage run -m pytest
+	coverage report
 
 .PHONY: format
 format:

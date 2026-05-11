@@ -17,9 +17,7 @@ somepath.write_bytes(stream.text)
 
 # Version Compat
 
-Usage of this library should work back to 3.9 (because of the tree-sitter dep),
-but development (and mypy compatibility) only on 3.10-3.12.  Linting requires
-3.12+ for full fidelity.
+Tested on Python 3.9-3.14.  Linting requires 3.12+ for full fidelity.
 
 # Versioning
 
