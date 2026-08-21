@@ -66,9 +66,14 @@ class Boolean(Item):
         original: Optional[Node] = None,
         stream: Optional[YamlStream] = None,
         annealed: bool = False,
+        raw: Optional[str] = None,
     ) -> None:
         super().__init__(original, stream, annealed)
         self.value = value
+        # The original spelling ("true", "True", "TRUE", ...), when parsed from
+        # a real node. Preserved so a forced re-render of a sibling elsewhere in
+        # the same mapping/sequence doesn't normalize this to lowercase.
+        self._raw = raw
 
     @classmethod
     def from_yaml(cls, node: Node, stream: YamlStream) -> "Boolean":
@@ -79,10 +84,11 @@ class Boolean(Item):
             original=node,
             stream=stream,
             annealed=False,
+            raw=t,
         )
 
     def to_string(self) -> str:
-        return str(self).lower()
+        return self._raw if self._raw is not None else str(self).lower()
 
     def __bool__(self) -> bool:
         return self.value
