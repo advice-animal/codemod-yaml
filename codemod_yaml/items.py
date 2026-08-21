@@ -969,7 +969,10 @@ class MappingPair(BlockItem):
         ]
         if len(children) == 1:
             key = children[0]
-            value = item(None)
+            # Constructed directly (not via item()) so a forced anneal renders
+            # this as "key: " rather than "key: ~" -- item(None) elsewhere
+            # (e.g. mapping["k"] = None) still defaults to "~".
+            value = Null(raw="")
         else:
             assert len(children) == 2
             key, value = children

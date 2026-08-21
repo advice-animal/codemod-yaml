@@ -273,6 +273,22 @@ x: y
 """
 
 
+def test_implicit_null_survives_unrelated_edit():
+    # An implicit null ("a:" with nothing after) used to be boxed as a plain
+    # Null() with no original spelling, so a forced whole-mapping anneal (from
+    # adding an unrelated key) rendered it as "a: ~" instead of leaving it empty.
+    stream = parse_str("""\
+a:
+b: 1
+""")
+    stream["c"] = 2
+    # Trailing space after "a:" comes from the pre-existing implicit-null
+    # style default (one space), harmless and YAML-equivalent to "a:".
+    assert stream.text == b'a: \nb: 1\n"c": 2\n'
+    reparsed = parse_str(stream.text.decode("utf-8"))
+    assert reparsed["a"] == None  # noqa: E711
+
+
 def test_setdefault_chain():
     stream = parse_str("x: y\n")
     stream.setdefault("a", {})
