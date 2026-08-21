@@ -31,15 +31,23 @@ class Null(Item):
         original: Optional[Node] = None,
         stream: Optional[YamlStream] = None,
         annealed: bool = False,
+        raw: Optional[str] = None,
     ):
         super().__init__(original, stream, annealed)
+        # The original spelling ("null", "Null", "NULL", "~"), when parsed from
+        # a real node. Preserved so a forced re-render of a sibling elsewhere in
+        # the same mapping/sequence doesn't normalize this to "~".
+        self._raw = raw
 
     @classmethod
     def from_yaml(cls, node: Node, stream: YamlStream) -> "Null":
-        return cls(original=node, stream=stream, annealed=False)
+        assert node.text is not None
+        return cls(
+            original=node, stream=stream, annealed=False, raw=node.text.decode("utf-8")
+        )
 
     def to_string(self) -> str:
-        return "~"
+        return self._raw if self._raw is not None else "~"
 
     def __hash__(self) -> int:
         return hash(None)
