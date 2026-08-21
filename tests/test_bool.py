@@ -18,3 +18,50 @@ def test_smoke():
 def test_parse():
     assert parse_str("true")._root == True
     assert parse_str("false")._root == False
+
+
+def test_original_spelling_survives_unrelated_edit():
+    # Adding a new key forces the whole mapping to re-render, which used to
+    # normalize every sibling bool value to lowercase regardless of how it was
+    # originally spelled.
+    stream = parse_str(
+        """\
+a: true
+b: True
+c: TRUE
+d: false
+e: False
+"""
+    )
+    stream["f"] = 1
+    assert (
+        stream.text
+        == b"""\
+a: true
+b: True
+c: TRUE
+d: false
+e: False
+"f": 1
+"""
+    )
+
+
+def test_original_spelling_survives_sequence_append():
+    stream = parse_str(
+        """\
+- true
+- True
+- FALSE
+"""
+    )
+    stream.append(1)
+    assert (
+        stream.text
+        == b"""\
+- true
+- True
+- FALSE
+- 1
+"""
+    )
